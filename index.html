@@ -151,7 +151,7 @@
             margin-right: 15px;
         }
 
-        /* Legacy Voice Toggle (Small Switch) */
+        /* Toggle Switch */
         .voice-control {
             display: flex;
             align-items: center;
@@ -387,7 +387,7 @@
             margin-top: 10px;
             margin-bottom: 10px;
             border: 1px solid #334155;
-            font-family: sans-serif; /* Reset from chat font */
+            font-family: sans-serif;
         }
         .code-header {
             display: flex;
@@ -422,9 +422,9 @@
         }
         code {
             color: #e5e7eb;
-            font-family: "Fira Code", monospace; /* Monospaced is key */
+            font-family: "Fira Code", monospace; 
             font-size: 0.85rem;
-            white-space: pre; /* Preserves tabs and newlines */
+            white-space: pre; 
         }
 
         /* --- VOICE MODE OVERLAY --- */
@@ -624,6 +624,7 @@
         let isVoiceActive = false;
         let isAiSpeaking = false; 
         let recognition = null;
+        let voiceDebounce = null; // Debounce Timer
 
         // DOM Elements
         const chatArea = document.getElementById('chatArea');
@@ -635,7 +636,6 @@
         const fileInput = document.getElementById('fileInput');
         const sidebar = document.getElementById('sidebar');
         const storageWarn = document.getElementById('storageWarn');
-        const typingIndicator = document.getElementById('typingIndicator');
         const voiceToggle = document.getElementById('voiceToggle');
 
         // --- Initialization ---
@@ -809,7 +809,8 @@
             chat.messages.forEach(m => {
                 if(m.type === 'text') {
                     const role = m.role === 'bot' ? 'assistant' : 'user';
-                    const cleanContent = m.content.replace(/\n\[Uploaded.*\]/, '');
+                    // Clean previous bot messages so we don't feed ads back into context
+                    let cleanContent = m.content.replace(/\n\[Uploaded.*\]/, '');
                     conversationHistory.push({ role: role, content: cleanContent });
                 }
             });
@@ -834,6 +835,9 @@
                         botReply = json.choices[0].message.content;
                     }
                 } catch(e) {}
+
+                // --- CRITICAL FIX: Remove "Support Pollinations.AI" Footer ---
+                botReply = botReply.replace(/(\n\n)?---[\s\S]*?Pollinations\.AI[\s\S]*$/, '');
 
                 removeMessage(loadingId);
                 addMessage(chatId, 'bot', botReply, 'text');
@@ -921,26 +925,24 @@
 
         // --- IMPROVED CODE FORMATTER ---
         function formatResponse(text) {
-            // 1. Extract code blocks first to avoid messing them up with HTML escaping
             const codeBlocks = [];
             let processedText = text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
                 codeBlocks.push({ lang: lang || 'text', code: code.trim() });
                 return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
             });
 
-            // 2. Escape HTML in the regular text and convert newlines to <br>
             processedText = processedText
                 .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") 
                 .replace(/\n/g, '<br>');
 
-            // 3. Restore code blocks with proper styling and download capability
             return processedText.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
                 const block = codeBlocks[index];
-                // Escape HTML inside code but preserve newlines
                 const escapedCode = block.code
                     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 
-                const encodedCode = encodeURIComponent(block.code);
+                // Use blob for large file support
+                const blob = new Blob([block.code], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
                 
                 return `
                   <div class="code-block">
@@ -948,7 +950,7 @@
                       <span>${block.lang}</span>
                       <div class="code-actions">
                         <button class="code-btn" onclick="copyCode(this)">Copy</button>
-                        <a class="code-btn" download="code.${block.lang === 'javascript' ? 'js' : block.lang}" href="data:text/plain;charset=utf-8,${encodedCode}">Download</a>
+                        <a class="code-btn" download="code.${block.lang === 'javascript' ? 'js' : block.lang}" href="${url}">Download</a>
                       </div>
                     </div>
                     <pre><code class="raw-code">${escapedCode}</code></pre>
@@ -957,7 +959,6 @@
         }
 
         function copyCode(btn) {
-            // Find the <code> element specifically
             const codeEl = btn.closest(".code-block").querySelector("code");
             if(codeEl) {
                 navigator.clipboard.writeText(codeEl.innerText);
@@ -1106,24 +1107,34 @@
                 const transcript = event.results[0][0].transcript;
                 if(!transcript || transcript.trim().length === 0) return;
 
-                updateVoiceUI('processing');
+                // --- DEBOUNCE LOGIC ---
+                // Instead of sending immediately, we wait 1.5 seconds.
+                // If the user speaks again in that time, we reset the timer.
                 
                 document.getElementById('chatInput').value = transcript;
-                
-                // Stop to prevent double sends
-                recognition.stop();
-                
-                handleSend(true); 
+                updateVoiceUI('listening'); // Keep visual feedback
+
+                // Clear existing timer
+                if(voiceDebounce) clearTimeout(voiceDebounce);
+
+                // Set new timer
+                voiceDebounce = setTimeout(() => {
+                    updateVoiceUI('processing');
+                    recognition.stop();
+                    handleSend(true);
+                }, 1500); // 1.5s silence required
             };
 
             recognition.onend = () => {
-                if (isVoiceActive && !isAiSpeaking && document.getElementById('voiceStatus').innerText === 'Listening...') {
+                // If we are waiting for debounce, do nothing.
+                // If voice is active, AI not speaking, and no debounce pending -> Restart
+                if (isVoiceActive && !isAiSpeaking && !voiceDebounce && document.getElementById('voiceStatus').innerText === 'Listening...') {
                     try { recognition.start(); } catch(e){}
                 }
             };
 
             recognition.onerror = (event) => {
-                console.warn("Speech Error", event.error);
+                // Ignore no-speech errors
                 if (event.error === 'no-speech' && isVoiceActive && !isAiSpeaking) {
                     try { recognition.start(); } catch(e){}
                 }
@@ -1160,6 +1171,7 @@
             // Force Stop Listening
             if (recognition) recognition.abort();
             isAiSpeaking = true; 
+            if(voiceDebounce) clearTimeout(voiceDebounce);
 
             const cleanText = text.replace(/<[^>]*>?/gm, ''); 
             // Don't read code blocks out loud
