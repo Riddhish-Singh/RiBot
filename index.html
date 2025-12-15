@@ -268,6 +268,7 @@
             border-bottom: 1px solid #3a3a3c;
             display: none;
             animation: slideDown 0.2s ease;
+            flex-wrap: wrap;
         }
         .preview-area.active { display: flex; align-items: center; gap: 10px; }
         
@@ -276,6 +277,17 @@
             width: auto;
             border-radius: 6px;
             border: 1px solid var(--accent);
+        }
+
+        .file-badge {
+            background: #444;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         
         .remove-preview {
@@ -367,6 +379,46 @@
             margin-top: 5px;
         }
 
+        /* --- CODE BLOCK STYLES (NEW) --- */
+        .code-block {
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 1px solid #334155;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #020617;
+            font-size: 0.8rem;
+            color: #38bdf8;
+            border-bottom: 1px solid #334155;
+        }
+        .code-header button, .code-header a {
+            background: transparent;
+            border: none;
+            color: #38bdf8;
+            cursor: pointer;
+            margin-left: 8px;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .code-header button:hover, .code-header a:hover { opacity: 1; }
+
+        pre {
+            margin: 0;
+            padding: 12px;
+            overflow-x: auto;
+        }
+        code {
+            color: #e5e7eb;
+            font-family: "Fira Code", monospace;
+            font-size: 0.85rem;
+        }
+
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideDown { from { height: 0; opacity: 0; } to { height: auto; opacity: 1; } }
@@ -426,18 +478,26 @@
             <div class="typing-indicator" id="typingIndicator">RiBot is thinking...</div>
             <div class="input-wrapper">
                 <div class="preview-area" id="previewArea">
-                    <img src="" id="previewImg" class="preview-thumb">
-                    <div style="flex:1; font-size:0.8rem; color:var(--text-dim)">Image attached (Art Mode)</div>
-                    <button class="remove-preview" onclick="clearImageSelection()">✕</button>
+                    <img src="" id="previewImg" class="preview-thumb" style="display:none">
+                    <div id="fileBadges" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+                    <div style="flex:1; font-size:0.8rem; color:var(--text-dim); margin-left:10px;">File(s) attached</div>
+                    <button class="remove-preview" onclick="clearFileSelection()">✕</button>
                 </div>
 
                 <div class="input-controls">
-                    <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Upload Image for Editing">
+                    <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Upload File">
                         📎
                     </button>
-                    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+                    <input 
+                      type="file" 
+                      id="fileInput" 
+                      accept=".txt,.pdf,.docx,.csv,.js,.py,.java,.html,.css,.json,image/*"
+                      multiple
+                      style="display:none" 
+                      onchange="handleFileSelect(event)"
+                    >
                     
-                    <input type="text" id="chatInput" placeholder="Chat or describe an image..." autocomplete="off">
+                    <input type="text" id="chatInput" placeholder="Chat, code, or generate image..." autocomplete="off">
                     <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
                 </div>
             </div>
@@ -450,6 +510,7 @@
         let chats = []; 
         let activeChatId = null;
         let currentImageFile = null; 
+        let uploadedFilesContext = []; // New state for text/code files
 
         // DOM Elements
         const chatArea = document.getElementById('chatArea');
@@ -457,6 +518,7 @@
         const chatInput = document.getElementById('chatInput');
         const previewArea = document.getElementById('previewArea');
         const previewImg = document.getElementById('previewImg');
+        const fileBadges = document.getElementById('fileBadges');
         const fileInput = document.getElementById('fileInput');
         const sidebar = document.getElementById('sidebar');
         const storageWarn = document.getElementById('storageWarn');
@@ -473,24 +535,64 @@
             }
         };
 
-        // --- File Handling ---
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                currentImageFile = file;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImg.src = e.target.result;
-                    previewArea.classList.add('active');
-                };
-                reader.readAsDataURL(file);
+        // --- File Handling (UPDATED) ---
+        async function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            
+            // Reset current selection
+            uploadedFilesContext = [];
+            currentImageFile = null;
+            previewImg.style.display = 'none';
+            fileBadges.innerHTML = '';
+
+            if (files.length === 0) return;
+
+            previewArea.classList.add('active');
+
+            for (const file of files) {
+                // Image Handling
+                if (file.type.startsWith("image/")) {
+                    currentImageFile = file;
+                    previewImg.src = URL.createObjectURL(file);
+                    previewImg.style.display = 'block';
+                } 
+                // Text/Code Handling
+                else if (file.type === "text/plain" || file.name.match(/\.(js|py|java|html|css|json|csv|txt|md)$/i)) {
+                    try {
+                        const text = await file.text();
+                        uploadedFilesContext.push({
+                            name: file.name,
+                            type: "text",
+                            content: text
+                        });
+                        
+                        // Visual badge for file
+                        const badge = document.createElement('div');
+                        badge.className = 'file-badge';
+                        badge.innerText = `📄 ${file.name}`;
+                        fileBadges.appendChild(badge);
+                    } catch (err) {
+                        console.error("Error reading file", file.name, err);
+                    }
+                }
+                // Placeholder for other types (PDF, etc - just name)
+                else {
+                     const badge = document.createElement('div');
+                     badge.className = 'file-badge';
+                     badge.innerText = `📎 ${file.name}`;
+                     fileBadges.appendChild(badge);
+                     // Note: Actual PDF parsing needs external libs (pdf.js), so we just skip content reading for now
+                }
             }
         }
 
-        function clearImageSelection() {
+        function clearFileSelection() {
             currentImageFile = null;
+            uploadedFilesContext = [];
             fileInput.value = '';
             previewArea.classList.remove('active');
+            previewImg.src = '';
+            fileBadges.innerHTML = '';
         }
 
         // --- Core Logic ---
@@ -510,7 +612,7 @@
             
             if (newChat.messages.length === 0) {
                 setTimeout(() => {
-                    addMessage(newId, 'bot', 'Hello! I am RiBot. You can chat with me, or ask me to generate images. 🎨', 'text');
+                    addMessage(newId, 'bot', 'Hello! I am RiBot. You can chat, upload code/docs, or generate images. 🎨', 'text');
                 }, 100);
             }
             
@@ -522,36 +624,42 @@
             renderHistory();
             renderChatArea();
             chatInput.value = '';
-            clearImageSelection(); 
+            clearFileSelection(); 
             chatInput.focus();
         }
 
         async function handleSend() {
             const text = chatInput.value.trim();
-            if ((!text && !currentImageFile) || !activeChatId) return;
+            const hasFiles = uploadedFilesContext.length > 0 || !!currentImageFile;
 
-            const hasImage = !!currentImageFile;
+            if ((!text && !hasFiles) || !activeChatId) return;
+
             const imageFileToSend = currentImageFile; 
             
             // 1. Add User Message
-            if (hasImage) {
+            if (imageFileToSend) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     addMessage(activeChatId, 'user', text, 'text', e.target.result);
                 };
                 reader.readAsDataURL(imageFileToSend);
             } else {
-                addMessage(activeChatId, 'user', text, 'text');
+                let msgText = text;
+                if (uploadedFilesContext.length > 0) {
+                     msgText += `\n[Uploaded ${uploadedFilesContext.length} text/code file(s)]`;
+                }
+                addMessage(activeChatId, 'user', msgText, 'text');
             }
 
             chatInput.value = '';
-            clearImageSelection();
+            const tempFilesContext = [...uploadedFilesContext]; // Copy context before clearing
+            clearFileSelection();
             updateChatTitle(text);
 
             // 2. Decide: Image Generation or Text Chat?
             const isImageCmd = text.toLowerCase().startsWith('generate') || text.toLowerCase().startsWith('create image');
             
-            if (hasImage || isImageCmd) {
+            if ((imageFileToSend && isImageCmd) || (isImageCmd && !imageFileToSend)) {
                 // --- IMAGE GENERATION MODE ---
                 const prompt = text.replace(/^(generate|create) image (of )?/i, '').trim();
                 const loadingId = addLoadingBubble("Creating Art...");
@@ -559,7 +667,7 @@
             } else {
                 // --- TEXT CHAT MODE ---
                 const loadingId = addLoadingBubble("RiBot is thinking...");
-                await handleTextChat(activeChatId, loadingId);
+                await handleTextChat(activeChatId, loadingId, tempFilesContext);
             }
         }
 
@@ -573,20 +681,32 @@
             }
         }
 
-        // --- Text Chat API ---
-        async function handleTextChat(chatId, loadingId) {
+        // --- Text Chat API (UPDATED) ---
+        async function handleTextChat(chatId, loadingId, filesContext) {
             const chat = chats.find(c => c.id === chatId);
             
             // Convert internal message format to OpenAI format for API
             const conversationHistory = [
-                { role: "system", content: "You are RiBot, a helpful AI assistant. You answer concisely." }
+                { role: "system", content: "You are RiBot, a helpful AI assistant. You answer concisely. When writing code, output markdown blocks." }
             ];
+            
+            // INJECT UPLOADED FILES INTO CONTEXT
+            if (filesContext && filesContext.length > 0) {
+                filesContext.forEach(file => {
+                    conversationHistory.push({
+                        role: "system",
+                        content: `File: ${file.name}\n\n${file.content}`
+                    });
+                });
+            }
             
             chat.messages.forEach(m => {
                 if(m.type === 'text') {
                     // Map 'bot' to 'assistant'
                     const role = m.role === 'bot' ? 'assistant' : 'user';
-                    conversationHistory.push({ role: role, content: m.content });
+                    // Strip the [Uploaded...] notice for the AI context to keep it clean
+                    const cleanContent = m.content.replace(/\n\[Uploaded.*\]/, '');
+                    conversationHistory.push({ role: role, content: cleanContent });
                 }
             });
 
@@ -694,6 +814,41 @@
             saveChatsToStorage();
         }
 
+        // --- CODE FORMATTER HELPER (NEW) ---
+        function formatResponse(text) {
+          // Escape HTML first to prevent injection issues, then format code
+          // Simple safety replace for basic characters outside code blocks would be good,
+          // but for this snippet we focus on the markdown replacement.
+          
+          return text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
+            const cleanCode = code.trim();
+            const encoded = encodeURIComponent(cleanCode);
+            return `
+              <div class="code-block">
+                <div class="code-header">
+                  <span>${lang || "code"}</span>
+                  <div>
+                    <button onclick="copyCode(this)">Copy</button>
+                    <a download="code.${lang || 'txt'}" 
+                       href="data:text/plain;charset=utf-8,${encoded}">
+                       Download
+                    </a>
+                  </div>
+                </div>
+                <pre><code>${cleanCode}</code></pre>
+              </div>
+            `;
+          }).replace(/\n/g, '<br>');
+        }
+
+        function copyCode(btn) {
+          const code = btn.closest(".code-block").querySelector("code").innerText;
+          navigator.clipboard.writeText(code);
+          const originalText = btn.innerText;
+          btn.innerText = "Copied!";
+          setTimeout(() => btn.innerText = originalText, 1500);
+        }
+
         function appendMessageToDOM(msg) {
             const row = document.createElement('div');
             row.className = `message-row ${msg.role}-row`;
@@ -708,8 +863,8 @@
 
             if (msg.type === 'text') {
                 const textSpan = document.createElement('div');
-                // Allow simple formatting
-                textSpan.innerHTML = msg.content.replace(/\n/g, '<br>');
+                // Use formatResponse instead of just replacing newlines
+                textSpan.innerHTML = formatResponse(msg.content);
                 bubble.appendChild(textSpan);
             } else if (msg.type === 'image') {
                 bubble.innerHTML = `
