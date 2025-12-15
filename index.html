@@ -379,7 +379,7 @@
             margin-top: 5px;
         }
 
-        /* --- CODE BLOCK STYLES (NEW) --- */
+        /* --- CODE BLOCK STYLES --- */
         .code-block {
             background: #0f172a;
             border-radius: 12px;
@@ -497,7 +497,7 @@
                       onchange="handleFileSelect(event)"
                     >
                     
-                    <input type="text" id="chatInput" placeholder="Chat, code, or generate image..." autocomplete="off">
+                    <input type="text" id="chatInput" placeholder="Chat, 'Draw a diagram', or 'Generate image'..." autocomplete="off">
                     <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
                 </div>
             </div>
@@ -510,7 +510,7 @@
         let chats = []; 
         let activeChatId = null;
         let currentImageFile = null; 
-        let uploadedFilesContext = []; // New state for text/code files
+        let uploadedFilesContext = []; 
 
         // DOM Elements
         const chatArea = document.getElementById('chatArea');
@@ -535,7 +535,7 @@
             }
         };
 
-        // --- File Handling (UPDATED) ---
+        // --- File Handling ---
         async function handleFileSelect(event) {
             const files = Array.from(event.target.files);
             
@@ -566,7 +566,6 @@
                             content: text
                         });
                         
-                        // Visual badge for file
                         const badge = document.createElement('div');
                         badge.className = 'file-badge';
                         badge.innerText = `📄 ${file.name}`;
@@ -575,13 +574,11 @@
                         console.error("Error reading file", file.name, err);
                     }
                 }
-                // Placeholder for other types (PDF, etc - just name)
                 else {
                      const badge = document.createElement('div');
                      badge.className = 'file-badge';
                      badge.innerText = `📎 ${file.name}`;
                      fileBadges.appendChild(badge);
-                     // Note: Actual PDF parsing needs external libs (pdf.js), so we just skip content reading for now
                 }
             }
         }
@@ -612,7 +609,7 @@
             
             if (newChat.messages.length === 0) {
                 setTimeout(() => {
-                    addMessage(newId, 'bot', 'Hello! I am RiBot. You can chat, upload code/docs, or generate images. 🎨', 'text');
+                    addMessage(newId, 'bot', 'Hello! I am RiBot. I can chat, analyze code/files, or draw diagrams (e.g. "Draw a diagram of a CPU").', 'text');
                 }, 100);
             }
             
@@ -652,18 +649,36 @@
             }
 
             chatInput.value = '';
-            const tempFilesContext = [...uploadedFilesContext]; // Copy context before clearing
+            const tempFilesContext = [...uploadedFilesContext]; 
             clearFileSelection();
             updateChatTitle(text);
 
-            // 2. Decide: Image Generation or Text Chat?
-            const isImageCmd = text.toLowerCase().startsWith('generate') || text.toLowerCase().startsWith('create image');
+            // 2. Decide Mode: Text vs Art vs Diagram
+            const lowerText = text.toLowerCase();
             
-            if ((imageFileToSend && isImageCmd) || (isImageCmd && !imageFileToSend)) {
-                // --- IMAGE GENERATION MODE ---
-                const prompt = text.replace(/^(generate|create) image (of )?/i, '').trim();
-                const loadingId = addLoadingBubble("Creating Art...");
-                await generateImage(activeChatId, prompt, imageFileToSend, loadingId);
+            // Triggers for Art
+            const isImageCmd = lowerText.startsWith('generate') || lowerText.startsWith('create image');
+            
+            // Triggers for Diagrams (NEW)
+            const isDiagramCmd = lowerText.includes('draw diagram') || lowerText.includes('create diagram') || lowerText.includes('make a diagram') || lowerText.includes('flowchart') || lowerText.includes('schematic');
+            
+            if ((imageFileToSend && (isImageCmd || isDiagramCmd)) || (isImageCmd || isDiagramCmd)) {
+                // --- VISUAL GENERATION MODE ---
+                
+                let prompt = text;
+                let isDiagram = false;
+
+                if (isDiagramCmd) {
+                    prompt = text.replace(/^(draw|create|make|generate).*diagram (of )?/i, '').trim();
+                    isDiagram = true;
+                } else {
+                    prompt = text.replace(/^(generate|create) image (of )?/i, '').trim();
+                }
+
+                const loadingText = isDiagram ? "Drawing Diagram..." : "Creating Art...";
+                const loadingId = addLoadingBubble(loadingText);
+                
+                await generateImage(activeChatId, prompt, imageFileToSend, loadingId, isDiagram);
             } else {
                 // --- TEXT CHAT MODE ---
                 const loadingId = addLoadingBubble("RiBot is thinking...");
@@ -673,7 +688,6 @@
 
         function updateChatTitle(text) {
             const chat = chats.find(c => c.id === activeChatId);
-            // Only name the chat if it's the first few messages
             if (chat.messages.length <= 2 && text) {
                 chat.title = text.substring(0, 25) + (text.length > 25 ? '...' : '');
                 renderHistory();
@@ -681,16 +695,14 @@
             }
         }
 
-        // --- Text Chat API (UPDATED) ---
+        // --- Text Chat API ---
         async function handleTextChat(chatId, loadingId, filesContext) {
             const chat = chats.find(c => c.id === chatId);
             
-            // Convert internal message format to OpenAI format for API
             const conversationHistory = [
                 { role: "system", content: "You are RiBot, a helpful AI assistant. You answer concisely. When writing code, output markdown blocks." }
             ];
             
-            // INJECT UPLOADED FILES INTO CONTEXT
             if (filesContext && filesContext.length > 0) {
                 filesContext.forEach(file => {
                     conversationHistory.push({
@@ -702,9 +714,7 @@
             
             chat.messages.forEach(m => {
                 if(m.type === 'text') {
-                    // Map 'bot' to 'assistant'
                     const role = m.role === 'bot' ? 'assistant' : 'user';
-                    // Strip the [Uploaded...] notice for the AI context to keep it clean
                     const cleanContent = m.content.replace(/\n\[Uploaded.*\]/, '');
                     conversationHistory.push({ role: role, content: cleanContent });
                 }
@@ -722,7 +732,6 @@
 
                 if (!response.ok) throw new Error('API Error');
                 
-                // Handle response (might be raw text or JSON)
                 const data = await response.text();
                 let botReply = data;
                 try {
@@ -744,19 +753,25 @@
             }
         }
 
-        // --- Image Generation API ---
-        async function generateImage(chatId, prompt, imageFile, bubbleId) {
+        // --- Image/Diagram Generation API (UPDATED) ---
+        async function generateImage(chatId, prompt, imageFile, bubbleId, isDiagram = false) {
             const seed = Math.floor(Math.random() * 1000000);
             let fullPrompt = "";
             let params = "";
 
+            // --- PROMPT ENGINEERING FOR DIAGRAMS VS ART ---
+            if (isDiagram) {
+                // Clean technical look
+                fullPrompt = `${prompt}, technical diagram, schematic, white background, high contrast, clean lines, educational, vector style, minimal`;
+            } else {
+                // Artistic look
+                fullPrompt = `${prompt}, masterpiece, 8k, detailed, artistic`;
+            }
+
             if (imageFile) {
-                // Image-to-Image (Strict)
-                fullPrompt = `${prompt}, preserve identity, exact features, high quality`;
+                fullPrompt += ", preserve identity";
                 params = `?width=1024&height=1024&seed=${seed}&nologo=true&model=flux`;
             } else {
-                // Text-to-Image (Creative)
-                fullPrompt = `${prompt}, masterpiece, 8k, detailed`;
                 params = `?width=1024&height=1024&seed=${seed}&nologo=true&model=flux&enhance=true`;
             }
 
@@ -775,8 +790,8 @@
                     reader.readAsDataURL(blob); 
                     reader.onloadend = function() {
                         removeMessage(bubbleId);
-                        addMessage(chatId, 'bot', reader.result, 'image'); // Save Base64
-                        if(voiceToggle.checked) speak("I have generated your image.");
+                        addMessage(chatId, 'bot', reader.result, 'image'); 
+                        if(voiceToggle.checked) speak(isDiagram ? "Here is your diagram." : "I have generated your image.");
                     }
                 } else {
                     const finalUrl = baseUrl + params;
@@ -784,14 +799,14 @@
                     img.onload = () => {
                         removeMessage(bubbleId);
                         addMessage(chatId, 'bot', finalUrl, 'image');
-                        if(voiceToggle.checked) speak("Here is the image you asked for.");
+                        if(voiceToggle.checked) speak(isDiagram ? "Here is your diagram." : "Here is the image you asked for.");
                     };
                     img.onerror = () => { throw new Error("Load failed"); };
                     img.src = finalUrl;
                 }
             } catch (err) {
                 removeMessage(bubbleId);
-                addMessage(chatId, 'bot', "Image generation failed.", 'text');
+                addMessage(chatId, 'bot', "Generation failed.", 'text');
             }
         }
 
@@ -814,12 +829,8 @@
             saveChatsToStorage();
         }
 
-        // --- CODE FORMATTER HELPER (NEW) ---
+        // --- Code Formatter ---
         function formatResponse(text) {
-          // Escape HTML first to prevent injection issues, then format code
-          // Simple safety replace for basic characters outside code blocks would be good,
-          // but for this snippet we focus on the markdown replacement.
-          
           return text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
             const cleanCode = code.trim();
             const encoded = encodeURIComponent(cleanCode);
@@ -863,14 +874,13 @@
 
             if (msg.type === 'text') {
                 const textSpan = document.createElement('div');
-                // Use formatResponse instead of just replacing newlines
                 textSpan.innerHTML = formatResponse(msg.content);
                 bubble.appendChild(textSpan);
             } else if (msg.type === 'image') {
                 bubble.innerHTML = `
                     <div>Here is your result:</div>
                     <img src="${msg.content}" class="generated-img" onclick="window.open('${msg.content}', '_blank')">
-                    <a href="${msg.content}" download="RiBot-Art.jpg" style="color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none;">⬇ Download Image</a>
+                    <a href="${msg.content}" download="RiBot-Visual.jpg" style="color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none;">⬇ Download Image</a>
                 `;
             }
 
