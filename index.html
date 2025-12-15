@@ -129,7 +129,7 @@
             background: var(--bg-main);
         }
 
-        /* Top Bar / Mobile Header */
+        /* Top Bar */
         .top-bar {
             padding: 15px 20px;
             background: rgba(28, 28, 30, 0.8);
@@ -142,7 +142,7 @@
         }
 
         .mobile-menu-btn {
-            display: none; /* Hidden on desktop */
+            display: none; 
             background: none;
             border: none;
             color: white;
@@ -151,7 +151,7 @@
             margin-right: 15px;
         }
 
-        /* Voice Toggle Switch */
+        /* Legacy Voice Toggle (Small Switch) */
         .voice-control {
             display: flex;
             align-items: center;
@@ -351,7 +351,7 @@
         }
         .send-btn:hover { transform: scale(1.05); }
 
-        /* Loaders & Typing */
+        /* Loaders */
         .typing-indicator {
             font-style: italic;
             font-size: 0.8rem;
@@ -385,38 +385,135 @@
             border-radius: 12px;
             overflow: hidden;
             margin-top: 10px;
+            margin-bottom: 10px;
             border: 1px solid #334155;
+            font-family: sans-serif; /* Reset from chat font */
         }
         .code-header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 8px 12px;
             background: #020617;
             font-size: 0.8rem;
             color: #38bdf8;
             border-bottom: 1px solid #334155;
         }
-        .code-header button, .code-header a {
+        .code-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .code-btn {
             background: transparent;
             border: none;
-            color: #38bdf8;
+            color: #94a3b8;
             cursor: pointer;
-            margin-left: 8px;
             text-decoration: none;
-            opacity: 0.8;
-            transition: opacity 0.2s;
+            font-size: 0.75rem;
+            transition: color 0.2s;
         }
-        .code-header button:hover, .code-header a:hover { opacity: 1; }
+        .code-btn:hover { color: #fff; }
 
         pre {
             margin: 0;
-            padding: 12px;
+            padding: 15px;
             overflow-x: auto;
+            background: #0f172a;
         }
         code {
             color: #e5e7eb;
-            font-family: "Fira Code", monospace;
+            font-family: "Fira Code", monospace; /* Monospaced is key */
             font-size: 0.85rem;
+            white-space: pre; /* Preserves tabs and newlines */
+        }
+
+        /* --- VOICE MODE OVERLAY --- */
+        .voice-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .voice-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Central Orb */
+        .voice-orb {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            transition: all 0.2s ease;
+            margin-bottom: 40px;
+        }
+
+        .voice-orb.listening {
+            background: white;
+            animation: pulse-listen 1.5s infinite ease-in-out;
+        }
+
+        .voice-orb.processing {
+            background: var(--accent);
+            box-shadow: 0 0 40px var(--accent-glow);
+            animation: spin-pulse 1s infinite linear;
+        }
+
+        .voice-orb.speaking {
+            background: #34c759; /* Green */
+            box-shadow: 0 0 40px rgba(52, 199, 89, 0.5);
+            animation: pulse-speak 0.5s infinite alternate;
+        }
+
+        .voice-status {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .close-voice-btn {
+            background: #3a3a3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+            margin-top: 20px;
+        }
+        .close-voice-btn:hover { background: #555; }
+
+        /* Keyframes */
+        @keyframes pulse-listen {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        @keyframes pulse-speak {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes spin-pulse {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(0.8); }
+            100% { transform: rotate(360deg) scale(1); }
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -466,7 +563,7 @@
             </div>
             
             <label class="voice-control">
-                <span>🔊 Voice</span>
+                <span>🔊 Read Aloud</span>
                 <input type="checkbox" id="voiceToggle" style="display:none">
                 <div class="toggle-switch"></div>
             </label>
@@ -488,6 +585,11 @@
                     <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Upload File">
                         📎
                     </button>
+                    
+                    <button class="icon-btn" onclick="toggleVoiceMode()" title="Voice Conversation">
+                        🎧
+                    </button>
+
                     <input 
                       type="file" 
                       id="fileInput" 
@@ -497,12 +599,18 @@
                       onchange="handleFileSelect(event)"
                     >
                     
-                    <input type="text" id="chatInput" placeholder="Chat, 'Draw a diagram', or 'Generate image'..." autocomplete="off">
+                    <input type="text" id="chatInput" placeholder="Chat, code, or generate image..." autocomplete="off">
                     <button class="send-btn" id="sendBtn" onclick="handleSend()">➤</button>
                 </div>
             </div>
             <div id="storageWarn" class="storage-warn">Storage Full - Old chats might be removed</div>
         </div>
+    </div>
+
+    <div class="voice-overlay" id="voiceOverlay">
+        <div class="voice-orb" id="voiceOrb"></div>
+        <div class="voice-status" id="voiceStatus">Listening...</div>
+        <button class="close-voice-btn" onclick="toggleVoiceMode()">End Conversation</button>
     </div>
 
     <script>
@@ -511,6 +619,11 @@
         let activeChatId = null;
         let currentImageFile = null; 
         let uploadedFilesContext = []; 
+        
+        // Voice State
+        let isVoiceActive = false;
+        let isAiSpeaking = false; 
+        let recognition = null;
 
         // DOM Elements
         const chatArea = document.getElementById('chatArea');
@@ -539,7 +652,6 @@
         async function handleFileSelect(event) {
             const files = Array.from(event.target.files);
             
-            // Reset current selection
             uploadedFilesContext = [];
             currentImageFile = null;
             previewImg.style.display = 'none';
@@ -550,13 +662,11 @@
             previewArea.classList.add('active');
 
             for (const file of files) {
-                // Image Handling
                 if (file.type.startsWith("image/")) {
                     currentImageFile = file;
                     previewImg.src = URL.createObjectURL(file);
                     previewImg.style.display = 'block';
                 } 
-                // Text/Code Handling
                 else if (file.type === "text/plain" || file.name.match(/\.(js|py|java|html|css|json|csv|txt|md)$/i)) {
                     try {
                         const text = await file.text();
@@ -565,7 +675,6 @@
                             type: "text",
                             content: text
                         });
-                        
                         const badge = document.createElement('div');
                         badge.className = 'file-badge';
                         badge.innerText = `📄 ${file.name}`;
@@ -609,7 +718,7 @@
             
             if (newChat.messages.length === 0) {
                 setTimeout(() => {
-                    addMessage(newId, 'bot', 'Hello! I am RiBot. I can chat, analyze code/files, or draw diagrams (e.g. "Draw a diagram of a CPU").', 'text');
+                    addMessage(newId, 'bot', 'Hello! I am RiBot. You can chat, upload code/docs, or generate images. 🎨', 'text');
                 }, 100);
             }
             
@@ -625,7 +734,7 @@
             chatInput.focus();
         }
 
-        async function handleSend() {
+        async function handleSend(isVoiceSource = false) {
             const text = chatInput.value.trim();
             const hasFiles = uploadedFilesContext.length > 0 || !!currentImageFile;
 
@@ -653,34 +762,19 @@
             clearFileSelection();
             updateChatTitle(text);
 
-            // 2. Decide Mode: Text vs Art vs Diagram
-            const lowerText = text.toLowerCase();
+            // 2. Decide: Image Generation or Text Chat?
+            const isImageCmd = text.toLowerCase().startsWith('generate') || text.toLowerCase().startsWith('create image');
             
-            // Triggers for Art
-            const isImageCmd = lowerText.startsWith('generate') || lowerText.startsWith('create image');
-            
-            // Triggers for Diagrams (NEW)
-            const isDiagramCmd = lowerText.includes('draw diagram') || lowerText.includes('create diagram') || lowerText.includes('make a diagram') || lowerText.includes('flowchart') || lowerText.includes('schematic');
-            
-            if ((imageFileToSend && (isImageCmd || isDiagramCmd)) || (isImageCmd || isDiagramCmd)) {
-                // --- VISUAL GENERATION MODE ---
+            if ((imageFileToSend && isImageCmd) || (isImageCmd && !imageFileToSend)) {
+                if(isVoiceSource) updateVoiceUI('processing');
+                const prompt = text.replace(/^(generate|create) image (of )?/i, '').trim();
+                const loadingId = addLoadingBubble("Creating Art...");
+                await generateImage(activeChatId, prompt, imageFileToSend, loadingId);
                 
-                let prompt = text;
-                let isDiagram = false;
+                if(isVoiceActive) speak("I have created the image for you.", true);
 
-                if (isDiagramCmd) {
-                    prompt = text.replace(/^(draw|create|make|generate).*diagram (of )?/i, '').trim();
-                    isDiagram = true;
-                } else {
-                    prompt = text.replace(/^(generate|create) image (of )?/i, '').trim();
-                }
-
-                const loadingText = isDiagram ? "Drawing Diagram..." : "Creating Art...";
-                const loadingId = addLoadingBubble(loadingText);
-                
-                await generateImage(activeChatId, prompt, imageFileToSend, loadingId, isDiagram);
             } else {
-                // --- TEXT CHAT MODE ---
+                if(isVoiceSource) updateVoiceUI('processing');
                 const loadingId = addLoadingBubble("RiBot is thinking...");
                 await handleTextChat(activeChatId, loadingId, tempFilesContext);
             }
@@ -700,7 +794,7 @@
             const chat = chats.find(c => c.id === chatId);
             
             const conversationHistory = [
-                { role: "system", content: "You are RiBot, a helpful AI assistant. You answer concisely. When writing code, output markdown blocks." }
+                { role: "system", content: "You are RiBot, a helpful AI assistant. Answer concisely. When writing code, use Markdown code blocks with the language specified." }
             ];
             
             if (filesContext && filesContext.length > 0) {
@@ -744,34 +838,32 @@
                 removeMessage(loadingId);
                 addMessage(chatId, 'bot', botReply, 'text');
                 
-                if (voiceToggle.checked) speak(botReply);
+                // Voice Output Logic
+                if (isVoiceActive) {
+                    speak(botReply, true); 
+                } else if (voiceToggle.checked) {
+                    speak(botReply, false);
+                }
 
             } catch (error) {
                 console.error(error);
                 removeMessage(loadingId);
                 addMessage(chatId, 'bot', "Sorry, I'm having trouble connecting.", 'text');
+                if(isVoiceActive) speak("I am having trouble connecting.", true);
             }
         }
 
-        // --- Image/Diagram Generation API (UPDATED) ---
-        async function generateImage(chatId, prompt, imageFile, bubbleId, isDiagram = false) {
+        // --- Image Generation API ---
+        async function generateImage(chatId, prompt, imageFile, bubbleId) {
             const seed = Math.floor(Math.random() * 1000000);
             let fullPrompt = "";
             let params = "";
 
-            // --- PROMPT ENGINEERING FOR DIAGRAMS VS ART ---
-            if (isDiagram) {
-                // Clean technical look
-                fullPrompt = `${prompt}, technical diagram, schematic, white background, high contrast, clean lines, educational, vector style, minimal`;
-            } else {
-                // Artistic look
-                fullPrompt = `${prompt}, masterpiece, 8k, detailed, artistic`;
-            }
-
             if (imageFile) {
-                fullPrompt += ", preserve identity";
+                fullPrompt = `${prompt}, preserve identity, exact features, high quality`;
                 params = `?width=1024&height=1024&seed=${seed}&nologo=true&model=flux`;
             } else {
+                fullPrompt = `${prompt}, masterpiece, 8k, detailed`;
                 params = `?width=1024&height=1024&seed=${seed}&nologo=true&model=flux&enhance=true`;
             }
 
@@ -791,7 +883,6 @@
                     reader.onloadend = function() {
                         removeMessage(bubbleId);
                         addMessage(chatId, 'bot', reader.result, 'image'); 
-                        if(voiceToggle.checked) speak(isDiagram ? "Here is your diagram." : "I have generated your image.");
                     }
                 } else {
                     const finalUrl = baseUrl + params;
@@ -799,14 +890,13 @@
                     img.onload = () => {
                         removeMessage(bubbleId);
                         addMessage(chatId, 'bot', finalUrl, 'image');
-                        if(voiceToggle.checked) speak(isDiagram ? "Here is your diagram." : "Here is the image you asked for.");
                     };
                     img.onerror = () => { throw new Error("Load failed"); };
                     img.src = finalUrl;
                 }
             } catch (err) {
                 removeMessage(bubbleId);
-                addMessage(chatId, 'bot', "Generation failed.", 'text');
+                addMessage(chatId, 'bot', "Image generation failed.", 'text');
             }
         }
 
@@ -829,35 +919,52 @@
             saveChatsToStorage();
         }
 
-        // --- Code Formatter ---
+        // --- IMPROVED CODE FORMATTER ---
         function formatResponse(text) {
-          return text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
-            const cleanCode = code.trim();
-            const encoded = encodeURIComponent(cleanCode);
-            return `
-              <div class="code-block">
-                <div class="code-header">
-                  <span>${lang || "code"}</span>
-                  <div>
-                    <button onclick="copyCode(this)">Copy</button>
-                    <a download="code.${lang || 'txt'}" 
-                       href="data:text/plain;charset=utf-8,${encoded}">
-                       Download
-                    </a>
-                  </div>
-                </div>
-                <pre><code>${cleanCode}</code></pre>
-              </div>
-            `;
-          }).replace(/\n/g, '<br>');
+            // 1. Extract code blocks first to avoid messing them up with HTML escaping
+            const codeBlocks = [];
+            let processedText = text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
+                codeBlocks.push({ lang: lang || 'text', code: code.trim() });
+                return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+            });
+
+            // 2. Escape HTML in the regular text and convert newlines to <br>
+            processedText = processedText
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") 
+                .replace(/\n/g, '<br>');
+
+            // 3. Restore code blocks with proper styling and download capability
+            return processedText.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
+                const block = codeBlocks[index];
+                // Escape HTML inside code but preserve newlines
+                const escapedCode = block.code
+                    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
+                const encodedCode = encodeURIComponent(block.code);
+                
+                return `
+                  <div class="code-block">
+                    <div class="code-header">
+                      <span>${block.lang}</span>
+                      <div class="code-actions">
+                        <button class="code-btn" onclick="copyCode(this)">Copy</button>
+                        <a class="code-btn" download="code.${block.lang === 'javascript' ? 'js' : block.lang}" href="data:text/plain;charset=utf-8,${encodedCode}">Download</a>
+                      </div>
+                    </div>
+                    <pre><code class="raw-code">${escapedCode}</code></pre>
+                  </div>`;
+            });
         }
 
         function copyCode(btn) {
-          const code = btn.closest(".code-block").querySelector("code").innerText;
-          navigator.clipboard.writeText(code);
-          const originalText = btn.innerText;
-          btn.innerText = "Copied!";
-          setTimeout(() => btn.innerText = originalText, 1500);
+            // Find the <code> element specifically
+            const codeEl = btn.closest(".code-block").querySelector("code");
+            if(codeEl) {
+                navigator.clipboard.writeText(codeEl.innerText);
+                const originalText = btn.innerText;
+                btn.innerText = "Copied!";
+                setTimeout(() => btn.innerText = originalText, 1500);
+            }
         }
 
         function appendMessageToDOM(msg) {
@@ -880,7 +987,7 @@
                 bubble.innerHTML = `
                     <div>Here is your result:</div>
                     <img src="${msg.content}" class="generated-img" onclick="window.open('${msg.content}', '_blank')">
-                    <a href="${msg.content}" download="RiBot-Visual.jpg" style="color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none;">⬇ Download Image</a>
+                    <a href="${msg.content}" download="RiBot-Art.jpg" style="color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none;">⬇ Download Image</a>
                 `;
             }
 
@@ -945,13 +1052,145 @@
             sidebar.classList.toggle('open');
         }
 
-        function speak(text) {
-            const cleanText = text.replace(/<[^>]*>?/gm, '');
+        // --- ADVANCED VOICE MODE LOGIC ---
+
+        function initSpeech() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert("Your browser does not support Voice Recognition. Try Chrome or Edge.");
+                return null;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const rec = new SpeechRecognition();
+            rec.continuous = false; 
+            rec.interimResults = false;
+            rec.lang = 'en-US';
+            return rec;
+        }
+
+        function toggleVoiceMode() {
+            const overlay = document.getElementById('voiceOverlay');
+            
+            if (!isVoiceActive) {
+                // TURN ON
+                isVoiceActive = true;
+                overlay.classList.add('active');
+                
+                if (!recognition) {
+                    recognition = initSpeech();
+                    setupRecognitionHandlers();
+                }
+                startListening();
+            } else {
+                // TURN OFF
+                isVoiceActive = false;
+                overlay.classList.remove('active');
+                if (recognition) recognition.stop();
+                window.speechSynthesis.cancel(); 
+            }
+        }
+
+        function setupRecognitionHandlers() {
+            if(!recognition) return;
+
+            recognition.onstart = () => {
+                if(isAiSpeaking) {
+                    recognition.abort(); 
+                    return;
+                }
+                updateVoiceUI('listening');
+            };
+
+            recognition.onresult = (event) => {
+                if(isAiSpeaking) return;
+
+                const transcript = event.results[0][0].transcript;
+                if(!transcript || transcript.trim().length === 0) return;
+
+                updateVoiceUI('processing');
+                
+                document.getElementById('chatInput').value = transcript;
+                
+                // Stop to prevent double sends
+                recognition.stop();
+                
+                handleSend(true); 
+            };
+
+            recognition.onend = () => {
+                if (isVoiceActive && !isAiSpeaking && document.getElementById('voiceStatus').innerText === 'Listening...') {
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.warn("Speech Error", event.error);
+                if (event.error === 'no-speech' && isVoiceActive && !isAiSpeaking) {
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+        }
+
+        function startListening() {
+            if (!isVoiceActive || isAiSpeaking) return; 
+            try {
+                updateVoiceUI('listening');
+                recognition.start();
+            } catch(e) {}
+        }
+
+        function updateVoiceUI(state) {
+            const orb = document.getElementById('voiceOrb');
+            const status = document.getElementById('voiceStatus');
+            
+            orb.className = 'voice-orb'; 
+            
+            if (state === 'listening') {
+                orb.classList.add('listening');
+                status.innerText = "Listening...";
+            } else if (state === 'processing') {
+                orb.classList.add('processing');
+                status.innerText = "Thinking...";
+            } else if (state === 'speaking') {
+                orb.classList.add('speaking');
+                status.innerText = "RiBot is speaking...";
+            }
+        }
+
+        function speak(text, resumeListening = false) {
+            // Force Stop Listening
+            if (recognition) recognition.abort();
+            isAiSpeaking = true; 
+
+            const cleanText = text.replace(/<[^>]*>?/gm, ''); 
+            // Don't read code blocks out loud
+            const speechText = cleanText.replace(/```[\s\S]*?```/g, " I have written some code for you. ");
+
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
-                const utterance = new SpeechSynthesisUtterance(cleanText);
+                
+                if(isVoiceActive) updateVoiceUI('speaking');
+
+                const utterance = new SpeechSynthesisUtterance(speechText);
                 utterance.pitch = 1;
                 utterance.rate = 1;
+
+                utterance.onend = () => {
+                    isAiSpeaking = false;
+                    if (resumeListening && isVoiceActive) {
+                        // Wait 0.5s to avoid self-echo
+                        setTimeout(() => {
+                            startListening();
+                        }, 500); 
+                    } else if (isVoiceActive) {
+                        updateVoiceUI('listening'); 
+                    }
+                };
+
+                utterance.onerror = () => {
+                    isAiSpeaking = false;
+                    if (resumeListening && isVoiceActive) startListening();
+                };
+
                 window.speechSynthesis.speak(utterance);
             }
         }
