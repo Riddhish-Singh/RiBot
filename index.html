@@ -63,27 +63,28 @@
             border-right: 1px solid var(--border);
             position: relative; 
             z-index: 50;
-            
-            /* CHANGE: Make whole sidebar scrollable */
-            overflow-y: auto; 
-            height: 100%;
+            height: 100%; 
+            /* REMOVED overflow-y: auto from here so top/bottom stick */
+            overflow: hidden; 
         }
-
-        /* Custom Scrollbar for Sidebar */
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
 
         /* Closed State (Desktop) */
         .sidebar.closed {
             margin-left: calc(var(--sidebar-width) * -1);
         }
 
-        /* Top Bar with Search */
+        /* --- STICKY TOP SECTION --- */
+        /* Wrapper for Search & Buttons (No scrolling) */
+        .sidebar-fixed-top {
+            flex-shrink: 0; /* Prevents shrinking */
+            margin-bottom: 10px;
+        }
+
         .sidebar-top {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .search-box {
@@ -108,22 +109,19 @@
             font-size: 0.9rem;
         }
 
-        /* Close Button (Mobile/Sidebar Internal) */
         .sidebar-close-btn { 
             cursor: pointer; 
             font-size: 1.2rem; 
             color: var(--text-dim);
             padding: 5px;
-            display: none; /* Hidden on desktop by default */
+            display: none; 
         }
         .sidebar-close-btn:hover { color: var(--text); }
 
-        /* New Chat Buttons */
         .new-chat-group {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            margin-bottom: 20px;
         }
 
         .new-chat-btn {
@@ -154,6 +152,20 @@
             border-color: var(--text-dim);
         }
 
+        /* --- SCROLLABLE MIDDLE SECTION --- */
+        .sidebar-content {
+            flex: 1; /* Takes up all available space between top and footer */
+            overflow-y: auto; /* Enables scrolling for this area */
+            overflow-x: hidden;
+            margin-right: -8px; /* Offset scrollbar padding */
+            padding-right: 8px;
+            padding-top: 10px;
+        }
+
+        /* Custom Scrollbar only for the middle content */
+        .sidebar-content::-webkit-scrollbar { width: 4px; }
+        .sidebar-content::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+
         /* Section Headers */
         .section-header {
             font-size: 0.75rem;
@@ -161,7 +173,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text-dim);
-            margin-top: 15px;
+            margin-top: 20px; /* More spacing */
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -169,6 +181,7 @@
             cursor: pointer;
             user-select: none;
         }
+        .section-header:first-child { margin-top: 0; } /* Remove margin from first header */
         .section-header:hover { color: var(--text); }
 
         /* My Stuff Thumbnails */
@@ -206,7 +219,6 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            margin-bottom: 10px;
             min-height: 10px;
         }
         .file-list-item {
@@ -243,7 +255,6 @@
         }
         .gem-item:hover { background: rgba(128, 128, 128, 0.1); color: var(--text); }
         
-        /* Icon Handling */
         .gem-icon { font-size: 1.1rem; width: 20px; text-align: center; }
         
         .gem-icon-img { 
@@ -265,13 +276,10 @@
 
         /* History (Chats) List */
         .history-list {
-            /* REMOVED: flex: 1 and independent scrolling to allow full sidebar scroll */
-            /* flex: 1; */
             display: flex;
             flex-direction: column;
             gap: 2px;
-            padding-right: 5px;
-            /* overflow-y: auto; */
+            padding-right: 0px; 
         }
 
         .history-item {
@@ -314,11 +322,12 @@
         }
         .history-item:hover .delete-chat { opacity: 1; }
 
-        /* Bottom Settings */
+        /* --- STICKY BOTTOM SECTION --- */
         .sidebar-footer {
-            margin-top: auto; /* Pushes to bottom of content, or bottom of sidebar if scrolling */
+            flex-shrink: 0;
             padding-top: 15px;
             border-top: 1px solid var(--border);
+            margin-top: 5px;
         }
 
         /* --- Main Chat Area --- */
@@ -933,51 +942,55 @@
 <body>
 
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-top">
-            <div class="search-box">
-                <i class="ri-search-line"></i>
-                <input type="text" class="search-input" id="searchHistory" placeholder="Search chats..." onkeyup="filterChats()">
+        <div class="sidebar-fixed-top">
+            <div class="sidebar-top">
+                <div class="search-box">
+                    <i class="ri-search-line"></i>
+                    <input type="text" class="search-input" id="searchHistory" placeholder="Search chats..." onkeyup="filterChats()">
+                </div>
+                <span class="sidebar-close-btn" onclick="toggleSidebar()"><i class="ri-close-line"></i></span>
             </div>
-            <span class="sidebar-close-btn" onclick="toggleSidebar()"><i class="ri-close-line"></i></span>
+
+            <div class="new-chat-group">
+                <button class="new-chat-btn" onclick="startNewChat()">
+                    <i class="ri-edit-box-line" style="font-size:1.1rem"></i>
+                    New chat
+                </button>
+                
+                <button class="new-chat-btn temp-chat-btn" onclick="startNewChat('default', true)">
+                    <i class="ri-eye-off-line" style="font-size:1.1rem"></i>
+                    Temporary chat
+                </button>
+            </div>
         </div>
 
-        <div class="new-chat-group">
-            <button class="new-chat-btn" onclick="startNewChat()">
-                <i class="ri-edit-box-line" style="font-size:1.1rem"></i>
-                New chat
-            </button>
-            
-            <button class="new-chat-btn temp-chat-btn" onclick="startNewChat('default', true)">
-                <i class="ri-eye-off-line" style="font-size:1.1rem"></i>
-                Temporary chat
-            </button>
-        </div>
+        <div class="sidebar-content">
+            <div class="section-header" onclick="openGallery()">
+                <span>My Stuff</span>
+                <i class="ri-arrow-right-s-line"></i>
+            </div>
+            <div class="my-stuff-thumbs" id="myStuffThumbs">
+                <div style="font-size:0.8rem; color:#555; padding:5px;">No images yet</div>
+            </div>
 
-        <div class="section-header" onclick="openGallery()">
-            <span>My Stuff</span>
-            <i class="ri-arrow-right-s-line"></i>
-        </div>
-        <div class="my-stuff-thumbs" id="myStuffThumbs">
-            <div style="font-size:0.8rem; color:#555; padding:5px;">No images yet</div>
-        </div>
+            <div class="section-header">
+                <span>Files</span>
+            </div>
+            <div class="chat-files-list" id="chatFilesList">
+                <div style="font-size:0.8rem; color:var(--text-dim); padding:5px;">No files attached</div>
+            </div>
 
-        <div class="section-header">
-            <span>Files</span>
-        </div>
-        <div class="chat-files-list" id="chatFilesList">
-            <div style="font-size:0.8rem; color:var(--text-dim); padding:5px;">No files attached</div>
-        </div>
+            <div class="section-header" onclick="openGemsLibrary()">
+                <span>Gems (Recent)</span>
+                <i class="ri-arrow-right-s-line"></i>
+            </div>
+            <div class="gems-list" id="gemsListContainer"></div>
 
-        <div class="section-header" onclick="openGemsLibrary()">
-            <span>Gems (Recent)</span>
-            <i class="ri-arrow-right-s-line"></i>
+            <div class="section-header">
+                <span>Chats</span>
+            </div>
+            <div class="history-list" id="historyList"></div>
         </div>
-        <div class="gems-list" id="gemsListContainer"></div>
-
-        <div class="section-header">
-            <span>Chats</span>
-        </div>
-        <div class="history-list" id="historyList"></div>
         
         <div class="sidebar-footer">
              <div class="gem-item" onclick="openSettings()">
@@ -1358,7 +1371,7 @@
                 title: isTemp ? "Temporary Chat" : gem.name, 
                 systemPrompt: gem.prompt, 
                 gemType: gemKey,
-                isTemp: isTemp, // Mark as temp
+                isTemp: isTemp,
                 files: [], // Array to store files uploaded in this chat
                 messages: [] 
             };
@@ -1648,7 +1661,7 @@
                     if (aiMovePlayed) {
                         const fen = chessGame.fen();
                         const boardUrl = `https://fen2image.chessvision.ai/${encodeURIComponent(fen)}`;
-                        addMessage(chatId, 'bot', boardUrl, 'chess-image');
+                        addMessage(activeChatId, 'bot', boardUrl, 'chess-image');
                     }
                 }
 
