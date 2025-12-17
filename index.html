@@ -63,7 +63,15 @@
             border-right: 1px solid var(--border);
             position: relative; 
             z-index: 50;
+            
+            /* CHANGE: Make whole sidebar scrollable */
+            overflow-y: auto; 
+            height: 100%;
         }
+
+        /* Custom Scrollbar for Sidebar */
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
 
         /* Closed State (Desktop) */
         .sidebar.closed {
@@ -193,7 +201,7 @@
             color: white;
         }
 
-        /* File List (New) */
+        /* File List */
         .chat-files-list {
             display: flex;
             flex-direction: column;
@@ -238,7 +246,6 @@
         /* Icon Handling */
         .gem-icon { font-size: 1.1rem; width: 20px; text-align: center; }
         
-        /* FILTER: Turn Black PNG into Sidebar Grey */
         .gem-icon-img { 
             width: 20px; 
             height: 20px; 
@@ -258,16 +265,14 @@
 
         /* History (Chats) List */
         .history-list {
-            flex: 1;
-            overflow-y: auto;
+            /* REMOVED: flex: 1 and independent scrolling to allow full sidebar scroll */
+            /* flex: 1; */
             display: flex;
             flex-direction: column;
             gap: 2px;
             padding-right: 5px;
+            /* overflow-y: auto; */
         }
-        /* Custom Scrollbar */
-        .history-list::-webkit-scrollbar { width: 4px; }
-        .history-list::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
 
         .history-item {
             padding: 10px 12px;
@@ -311,7 +316,7 @@
 
         /* Bottom Settings */
         .sidebar-footer {
-            margin-top: auto;
+            margin-top: auto; /* Pushes to bottom of content, or bottom of sidebar if scrolling */
             padding-top: 15px;
             border-top: 1px solid var(--border);
         }
@@ -1178,15 +1183,17 @@
         // --- Sidebar Logic ---
         function toggleSidebar() {
             if(window.innerWidth <= 768) {
+                // Mobile behavior: class 'open' slides it in
                 sidebar.classList.toggle('open');
             } else {
+                // Desktop behavior: class 'closed' hides it
                 sidebar.classList.toggle('closed');
             }
         }
 
         // --- Gems Logic ---
         function updateGemUsage(gemId) {
-            if(gemId === 'default') return; 
+            if(gemId === 'default') return; // Don't track default
             gemUsage[gemId] = Date.now();
             saveDataToStorage();
             renderRecentGems();
@@ -1196,15 +1203,18 @@
         function renderRecentGems() {
             gemsListContainer.innerHTML = '';
             
+            // Sort by usage time, exclude default
             let sortedGems = Object.keys(GEMS)
                 .filter(k => k !== 'default') 
                 .sort((a, b) => (gemUsage[b] || 0) - (gemUsage[a] || 0));
 
+            // Default fallback if empty
             if (Object.keys(gemUsage).length === 0) {
                  const defaults = ['coder', 'chess'];
                  sortedGems = [...defaults, ...sortedGems.filter(g => !defaults.includes(g))];
             }
 
+            // ONLY SHOW TOP 2
             const gemsToShow = sortedGems.slice(0, 2);
 
             gemsToShow.forEach(key => {
@@ -1213,6 +1223,7 @@
                 div.className = 'gem-item';
                 div.onclick = () => startNewChat(key);
                 
+                // Smart Icon Rendering (URL vs Class)
                 let iconHtml = '';
                 if(gem.icon.includes('http') || gem.icon.includes('data:')) {
                     iconHtml = `<img src="${gem.icon}" class="gem-icon-img">`;
@@ -1230,7 +1241,7 @@
 
         // --- NEW: Full Gem Library View ---
         function openGemsLibrary() {
-            activeChatId = 'gems-library'; 
+            activeChatId = 'gems-library'; // Special ID
             renderHistory();
             
             chatArea.innerHTML = '';
@@ -1243,12 +1254,14 @@
             const grid = document.createElement('div');
             grid.className = 'gem-grid';
             
+            // Render all gems
             Object.keys(GEMS).forEach(key => {
                 const gem = GEMS[key];
                 const card = document.createElement('div');
                 card.className = 'gem-card';
                 card.onclick = () => startNewChat(key);
                 
+                // Smart Icon Rendering for Card
                 let iconHtml = '';
                 if(gem.icon.includes('http') || gem.icon.includes('data:')) {
                     iconHtml = `<img src="${gem.icon}" class="gem-card-icon-img">`;
@@ -1329,6 +1342,7 @@
             const gem = GEMS[gemKey] || GEMS['default'];
             const newId = Date.now();
             
+            // Only update usage if it's NOT a temp chat
             if (!isTemp) {
                 updateGemUsage(gemKey);
             }
@@ -1344,7 +1358,7 @@
                 title: isTemp ? "Temporary Chat" : gem.name, 
                 systemPrompt: gem.prompt, 
                 gemType: gemKey,
-                isTemp: isTemp,
+                isTemp: isTemp, // Mark as temp
                 files: [], // Array to store files uploaded in this chat
                 messages: [] 
             };
@@ -1440,6 +1454,7 @@
             const container = document.getElementById('myStuffThumbs');
             const images = [];
             
+            // Collect last 3 images
             for(const chat of chats) {
                 for(let i = chat.messages.length - 1; i >= 0; i--) {
                     if(chat.messages[i].type === 'image') {
@@ -1474,9 +1489,10 @@
 
             if ((!text && !hasFiles)) return;
 
+            // Handle special views logic (if activeChatId is library/gallery, start new)
             if (activeChatId === 'gallery' || activeChatId === 'gems-library' || !activeChatId) {
                 startNewChat();
-                await new Promise(r => setTimeout(r, 10)); 
+                await new Promise(r => setTimeout(r, 10)); // small delay
             }
 
             const currentChat = chats.find(c => c.id === activeChatId);
