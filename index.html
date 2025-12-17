@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RiBot Studio</title>
+    <link rel="icon" type="image/png" href="https://riddhish-singh.github.io/RiSync.ai/assets/logo-bot.png">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
@@ -49,6 +51,15 @@
             height: 100vh;
             overflow: hidden;
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- LOGO STYLE --- */
+        .app-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            margin-right: 10px;
+            object-fit: contain;
         }
 
         /* --- SIDEBAR DESIGN --- */
@@ -1005,6 +1016,7 @@
         <div class="top-bar">
             <div style="display:flex; align-items:center;">
                 <button class="menu-toggle-btn" onclick="toggleSidebar()"><i class="ri-menu-line"></i></button>
+                <img src="https://riddhish-singh.github.io/RiSync.ai/assets/logo-bot.png" alt="RiBot Logo" class="app-logo">
                 <span style="font-weight:600">RiBot</span>
             </div>
             
