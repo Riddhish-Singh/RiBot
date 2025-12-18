@@ -1988,7 +1988,7 @@ const firebaseConfig = {
                             <img src="${msg.content}" onclick="window.open('${msg.content}', '_blank')" loading="lazy">
                             <div class="gallery-info">
                                 <span style="font-size:0.75rem; color:#ddd;">${new Date(msg.id).toLocaleDateString()}</span>
-                                <a href="${msg.content}" download="RiBot-Art-${count}.jpg" class="gallery-btn">Download</a>
+                                <button onclick="forceDownload('${msg.content}', 'RiBot-Art-${count}.jpg')" class="gallery-btn" style="border:none; cursor:pointer;">Download</button>
                             </div>
                         `;
                         grid.appendChild(item);
@@ -2307,6 +2307,34 @@ const firebaseConfig = {
 
         // --- Helpers ---
 
+        // --- NEW DOWNLOAD HELPER FUNCTION ---
+        async function forceDownload(url, filename) {
+            try {
+                // 1. Fetch the image as a "Blob" (binary data)
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const blob = await response.blob();
+                
+                // 2. Create a temporary local URL for that data
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                // 3. Create a hidden link and click it programmatically
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                
+                // 4. Cleanup
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+            } catch (error) {
+                console.error('Download failed:', error);
+                // Fallback: If it fails, open in new tab so user isn't stuck
+                window.open(url, '_blank');
+            }
+        }
+
         function addMessage(chatId, role, content, type, attachmentData = null) {
             const chat = chats.find(c => c.id === chatId);
             if (!chat) return;
@@ -2401,7 +2429,7 @@ const firebaseConfig = {
                 bubble.innerHTML = `
                     <div>Here is your result:</div>
                     <img src="${msg.content}" class="generated-img" onclick="window.open('${msg.content}', '_blank')">
-                    <a href="${msg.content}" download="RiBot-Art.jpg" style="color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none;">⬇ Download Image</a>
+                    <button onclick="forceDownload('${msg.content}', 'RiBot-Art.jpg')" style="background:transparent; border:none; color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none; cursor:pointer;">⬇ Download Image</button>
                 `;
             }
             else if (msg.type === 'chess-image') {
