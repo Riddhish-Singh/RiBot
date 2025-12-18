@@ -2301,13 +2301,11 @@
                 }
             });
 
-// 2. Attempt Connection
-        try {
-            // PRIMARY METHOD: POST Request
-            const response = await fetch('https://text.pollinations.ai/', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            // 2. Attempt Connection
+            try {
+                // PRIMARY METHOD: POST Request
+                const response = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         messages: conversationHistory,
