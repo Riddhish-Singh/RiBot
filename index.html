@@ -58,7 +58,7 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- AUTH SCREEN STYLES (NEW) --- */
+        /* --- AUTH SCREEN STYLES --- */
         #authContainer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -558,7 +558,7 @@
             border: 1px solid rgba(255,255,255,0.2);
         }
         
-        /* --- WELCOME SCREEN STYLES (NEW) --- */
+        /* --- WELCOME SCREEN STYLES --- */
         .welcome-container {
             display: flex;
             flex-direction: column;
@@ -670,7 +670,7 @@
             border-color: var(--text-dim);
         }
 
-        /* --- MARKDOWN STYLES (New) --- */
+        /* --- MARKDOWN STYLES --- */
         .markdown-body {
             font-size: 1rem;
         }
@@ -727,7 +727,7 @@
         .markdown-body a:hover { text-decoration: underline; }
         .light-mode .markdown-body a { color: #007AFF; }
 
-        /* --- CODE BLOCK STYLES (Preserved) --- */
+        /* --- CODE BLOCK STYLES --- */
         .code-block {
             background: #0f172a;
             border-radius: 8px;
@@ -1154,6 +1154,39 @@
         .setting-label { flex: 1; }
         .setting-danger { color: #ff453a; }
         .setting-danger .setting-icon { color: #ff453a; }
+        
+        /* Personalization Textarea */
+        .personalization-input {
+            width: 90%;
+            margin: 0 auto;
+            display: block;
+            height: 150px;
+            background: rgba(128,128,128,0.1);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+        }
+        .personalization-input:focus { outline: none; border-color: var(--accent); }
+        
+        .modal-btn-row {
+            display: flex;
+            justify-content: flex-end;
+            padding: 15px 20px;
+            gap: 10px;
+        }
+        .action-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .action-btn:hover { background: var(--accent-hover); }
 
         /* Keyframes */
         @keyframes pulse-listen {
@@ -1355,6 +1388,10 @@
                     <span class="setting-label"><i class="ri-contrast-line setting-icon"></i> Switch Theme</span>
                     <i class="ri-arrow-right-s-line" style="color:var(--text-dim)"></i>
                 </div>
+                <div class="setting-item" onclick="openPersonalization()">
+                    <span class="setting-label"><i class="ri-user-settings-line setting-icon"></i> Personalization</span>
+                    <i class="ri-arrow-right-s-line" style="color:var(--text-dim)"></i>
+                </div>
                 <div class="setting-item" onclick="exportData()">
                     <span class="setting-label"><i class="ri-download-cloud-line setting-icon"></i> Export Data</span>
                     <i class="ri-arrow-right-s-line" style="color:var(--text-dim)"></i>
@@ -1365,7 +1402,7 @@
                 </div>
                  <div class="setting-item" style="cursor:default">
                     <span class="setting-label" style="font-size:0.85rem; color:var(--text-dim)"><i class="ri-information-line setting-icon"></i> Version</span>
-                    <span style="font-size:0.85rem; color:var(--text-dim)">3.0.0 (Cloud)</span>
+                    <span style="font-size:0.85rem; color:var(--text-dim)">3.1.0 (Cloud)</span>
                 </div>
                 <div class="setting-item setting-danger" onclick="clearAllStorage()">
                     <span class="setting-label"><i class="ri-delete-bin-line setting-icon"></i> Clear Account Data</span>
@@ -1373,20 +1410,39 @@
             </div>
         </div>
     </div>
+
+    <div id="personalizationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Personalize Your AI</span>
+                <span class="close-modal" onclick="closePersonalization()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="padding: 0 20px 10px 20px; font-size: 0.9rem; color: var(--text-dim);">
+                    Tell RiBot about yourself. This information will be used to customize responses across all chats.
+                </div>
+                <textarea id="personalizationInput" class="personalization-input" placeholder="E.g., My name is Alex. I am a software engineer learning Python. I prefer concise answers and like metaphors related to space..."></textarea>
+                <div class="modal-btn-row">
+                    <button class="action-btn" onclick="savePersonalization()">Save & Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="importInput" style="display:none" accept=".json" onchange="handleImportFile(event)">
 
     <script>
         // --- FIREBASE CONFIGURATION ---
         // TODO: REPLACE THIS WITH YOUR OWN FIREBASE CONFIG FROM CONSOLE.FIREBASE.GOOGLE.COM
-const firebaseConfig = {
-  apiKey: "AIzaSyDwJX7AF6EB2g5UKhqjIzO99dtsJsS4IIY",
-  authDomain: "risync-platform.firebaseapp.com",
-  projectId: "risync-platform",
-  storageBucket: "risync-platform.firebasestorage.app",
-  messagingSenderId: "96562852252",
-  appId: "1:96562852252:web:a5904990726f67139d5859",
-  measurementId: "G-00B45WDCEL"
-};
+        const firebaseConfig = {
+          apiKey: "AIzaSyDwJX7AF6EB2g5UKhqjIzO99dtsJsS4IIY",
+          authDomain: "risync-platform.firebaseapp.com",
+          projectId: "risync-platform",
+          storageBucket: "risync-platform.firebasestorage.app",
+          messagingSenderId: "96562852252",
+          appId: "1:96562852252:web:a5904990726f67139d5859",
+          measurementId: "G-00B45WDCEL"
+        };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
@@ -1400,6 +1456,7 @@ const firebaseConfig = {
         // --- State Management ---
         let chats = []; 
         let gemUsage = {}; 
+        let userPersonalization = ""; // NEW: Variable to store user context
         let activeChatId = null;
         let currentImageFile = null; 
         let uploadedFilesContext = []; 
@@ -1529,6 +1586,7 @@ const firebaseConfig = {
                     document.getElementById('authContainer').style.display = 'flex';
                     chats = [];
                     gemUsage = {};
+                    userPersonalization = "";
                     openDashboard();
                 }
             });
@@ -1604,10 +1662,10 @@ const firebaseConfig = {
                 // Remove temporary chats before saving
                 const chatsToSave = chats.filter(c => !c.isTemp);
                 // Firestore limit check: Large images in chat might fail if doc > 1MB.
-                // In production, upload images to Storage and save URL. For this demo, we save JSON.
                 await db.collection('users').doc(currentUser.uid).set({
                     chats: chatsToSave,
                     gemUsage: gemUsage,
+                    personalization: userPersonalization, // Save personalization info
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
                 storageWarn.style.display = 'none';
@@ -1626,6 +1684,7 @@ const firebaseConfig = {
                     const data = doc.data();
                     chats = data.chats || [];
                     gemUsage = data.gemUsage || {};
+                    userPersonalization = data.personalization || ""; // Load personalization
                 }
                 // Refresh UI
                 renderHistory();
@@ -1643,6 +1702,7 @@ const firebaseConfig = {
                      db.collection('users').doc(currentUser.uid).delete().then(() => {
                          chats = [];
                          gemUsage = {};
+                         userPersonalization = "";
                          openDashboard();
                          renderHistory();
                          closeSettings();
@@ -2136,9 +2196,16 @@ const firebaseConfig = {
             const chat = chats.find(c => c.id === chatId);
             
             // 1. Prepare System Prompt & History
-            const sysPrompt = chat.systemPrompt || GEMS['default'].prompt;
+            let sysPrompt = chat.systemPrompt || GEMS['default'].prompt;
+            sysPrompt += " Use Markdown for formatting. Use ```language for code blocks.";
+            
+            // --- PERSONALIZATION INJECTION ---
+            if (userPersonalization && userPersonalization.trim() !== "") {
+                sysPrompt += `\n\n[USER CONTEXT: The user has provided the following details about themselves. Adapt your responses accordingly: "${userPersonalization}"]`;
+            }
+
             const conversationHistory = [
-                { role: "system", content: sysPrompt + " Use Markdown for formatting. Use ```language for code blocks." }
+                { role: "system", content: sysPrompt }
             ];
             
             // Add File Context
@@ -2589,6 +2656,23 @@ const firebaseConfig = {
             document.getElementById('settingsModal').style.display = 'none';
         }
 
+        // --- PERSONALIZATION LOGIC (NEW) ---
+        function openPersonalization() {
+            closeSettings(); // Close main settings
+            document.getElementById('personalizationModal').style.display = 'flex';
+            document.getElementById('personalizationInput').value = userPersonalization;
+        }
+        
+        function closePersonalization() {
+            document.getElementById('personalizationModal').style.display = 'none';
+        }
+        
+        function savePersonalization() {
+            userPersonalization = document.getElementById('personalizationInput').value.trim();
+            saveDataToCloud(); // Save to Firestore
+            closePersonalization();
+        }
+
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
             // We can also save theme to cloud in a real app, 
@@ -2639,6 +2723,9 @@ const firebaseConfig = {
         window.onclick = function(event) {
             if (event.target == document.getElementById('settingsModal')) {
                 closeSettings();
+            }
+            if (event.target == document.getElementById('personalizationModal')) {
+                closePersonalization();
             }
         }
 
