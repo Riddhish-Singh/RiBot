@@ -111,7 +111,6 @@
         }
         .auth-btn:hover { background: var(--accent-hover); }
         
-        /* Secondary Button Style for Magic Link */
         .auth-btn-outline {
             background: transparent;
             border: 1px solid var(--border);
@@ -163,12 +162,10 @@
             overflow: hidden; 
         }
 
-        /* Closed State (Desktop) */
         .sidebar.closed {
             margin-left: calc(var(--sidebar-width) * -1);
         }
 
-        /* --- STICKY TOP SECTION --- */
         .sidebar-fixed-top {
             flex-shrink: 0; 
             margin-bottom: 10px;
@@ -246,7 +243,6 @@
             border-color: var(--text-dim);
         }
 
-        /* --- SCROLLABLE MIDDLE SECTION --- */
         .sidebar-content {
             flex: 1; 
             overflow-y: auto; 
@@ -276,7 +272,6 @@
         .section-header:first-child { margin-top: 0; }
         .section-header:hover { color: var(--text); }
 
-        /* My Stuff Thumbnails */
         .my-stuff-thumbs {
             display: flex;
             gap: 8px;
@@ -306,7 +301,6 @@
             color: white;
         }
 
-        /* File List */
         .chat-files-list {
             display: flex;
             flex-direction: column;
@@ -328,7 +322,6 @@
         .file-list-item:hover { background: rgba(128, 128, 128, 0.1); color: var(--text); }
         .file-icon { color: var(--accent); font-size: 1rem; }
 
-        /* Gems List */
         .gems-list {
             display: flex;
             flex-direction: column;
@@ -366,7 +359,6 @@
             filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
         }
 
-        /* History (Chats) List */
         .history-list {
             display: flex;
             flex-direction: column;
@@ -414,7 +406,6 @@
         }
         .history-item:hover .delete-chat { opacity: 1; }
 
-        /* --- STICKY BOTTOM SECTION --- */
         .sidebar-footer {
             flex-shrink: 0;
             padding-top: 15px;
@@ -432,7 +423,6 @@
             text-overflow: ellipsis;
         }
 
-        /* --- Main Chat Area --- */
         .main-content {
             flex: 1;
             min-width: 0; 
@@ -443,7 +433,6 @@
             transition: margin-left 0.3s ease, background-color 0.3s;
         }
 
-        /* Top Bar */
         .top-bar {
             padding: 15px 20px;
             background: rgba(30, 30, 31, 0.95);
@@ -470,7 +459,6 @@
         }
         .menu-toggle-btn:hover { background: rgba(128, 128, 128, 0.2); }
 
-        /* Toggle Switch */
         .voice-control {
             display: flex;
             align-items: center;
@@ -503,7 +491,6 @@
         input[type="checkbox"]:checked + .toggle-switch { background: var(--accent); }
         input[type="checkbox"]:checked + .toggle-switch::after { transform: translateX(16px); }
 
-        /* Chat Messages */
         .chat-area {
             flex: 1;
             overflow-y: auto;
@@ -568,7 +555,6 @@
             border: 1px solid rgba(255,255,255,0.2);
         }
         
-        /* --- WELCOME SCREEN STYLES --- */
         .welcome-container {
             display: flex;
             flex-direction: column;
@@ -784,7 +770,6 @@
             white-space: pre; 
         }
 
-        /* --- GALLERY & GEM GRID STYLES --- */
         .gallery-grid, .gem-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -793,7 +778,6 @@
             width: 100%;
         }
         
-        /* Gallery Item */
         .gallery-item {
             position: relative;
             border-radius: 12px;
@@ -835,7 +819,6 @@
             border-radius: 4px;
         }
 
-        /* Gem Library Card */
         .gem-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -848,6 +831,7 @@
             transition: 0.2s;
             cursor: pointer;
             animation: fadeIn 0.4s ease;
+            position: relative;
         }
         .gem-card:hover { 
             border-color: var(--accent); 
@@ -891,7 +875,71 @@
             color: white;
         }
 
-        /* Input Area */
+        /* --- Custom Gem Styles --- */
+        .gem-form-group {
+            margin-bottom: 15px;
+        }
+        .gem-form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+        .gem-form-input, .gem-form-textarea {
+            width: 100%;
+            padding: 10px;
+            background: rgba(128,128,128,0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            outline: none;
+            font-family: inherit;
+        }
+        .gem-form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .gem-form-input:focus, .gem-form-textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .create-gem-card {
+            border: 2px dashed var(--border);
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            min-height: 250px;
+        }
+        .create-gem-card:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(128,128,128,0.05);
+        }
+
+        .delete-gem-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 69, 58, 0.2);
+            color: #ff453a;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .gem-card:hover .delete-gem-btn {
+            opacity: 1;
+        }
+
         .input-container {
             padding: 20px;
             border-top: 1px solid var(--border);
@@ -915,7 +963,6 @@
         }
         .input-wrapper:focus-within { border-color: var(--accent); }
 
-        /* Preview Area */
         .preview-area {
             padding: 12px;
             border-bottom: 1px solid var(--border);
@@ -956,7 +1003,6 @@
             justify-content: center;
         }
 
-        /* Controls Row */
         .input-controls {
             display: flex;
             align-items: center;
@@ -1005,7 +1051,6 @@
         }
         .send-btn:hover { background: var(--accent-hover); }
 
-        /* Loaders */
         .typing-indicator {
             font-style: italic;
             font-size: 0.8rem;
@@ -1034,7 +1079,6 @@
             margin-top: 5px;
         }
 
-        /* --- VOICE MODE OVERLAY --- */
         .voice-overlay {
             position: fixed;
             top: 0;
@@ -1057,7 +1101,6 @@
             opacity: 1;
         }
 
-        /* Central Orb */
         .voice-orb {
             width: 100px;
             height: 100px;
@@ -1105,7 +1148,6 @@
         }
         .close-voice-btn:hover { background: #555; }
 
-        /* --- SETTINGS MODAL --- */
         .modal {
             display: none; 
             position: fixed; 
@@ -1165,7 +1207,6 @@
         .setting-danger { color: #ff453a; }
         .setting-danger .setting-icon { color: #ff453a; }
         
-        /* Personalization Textarea */
         .personalization-input {
             width: 90%;
             margin: 0 auto;
@@ -1198,7 +1239,6 @@
         }
         .action-btn:hover { background: var(--accent-hover); }
 
-        /* Keyframes */
         @keyframes pulse-listen {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
             70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
@@ -1220,21 +1260,16 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideDown { from { height: 0; opacity: 0; } to { height: auto; opacity: 1; } }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
                 height: 100%;
-                /* Mobile: Start hidden off-screen */
                 margin-left: calc(var(--sidebar-width) * -1); 
                 box-shadow: 5px 0 15px rgba(0,0,0,0.5);
                 z-index: 1000;
             }
-            /* When open on mobile, margin-left becomes 0 */
             .sidebar.open { margin-left: 0; }
-            
-            .sidebar-close-btn { display: block; } /* Show close X on mobile inside sidebar */
-            
+            .sidebar-close-btn { display: block; }
             .bot-msg { min-width: auto; }
             .input-wrapper { border-radius: 0; border: none; border-top: 1px solid #333; }
         }
@@ -1409,7 +1444,7 @@
                 </div>
                  <div class="setting-item" style="cursor:default">
                     <span class="setting-label" style="font-size:0.85rem; color:var(--text-dim)"><i class="ri-information-line setting-icon"></i> Version</span>
-                    <span style="font-size:0.85rem; color:var(--text-dim)">3.1.0 </span>
+                    <span style="font-size:0.85rem; color:var(--text-dim)">3.2.0 </span>
                 </div>
                 <div class="setting-item setting-danger" onclick="clearAllStorage()">
                     <span class="setting-label"><i class="ri-delete-bin-line setting-icon"></i> Clear Account Data</span>
@@ -1431,6 +1466,48 @@
                 <textarea id="personalizationInput" class="personalization-input" placeholder="E.g., My name is Alex. I am a software engineer learning Python. I prefer concise answers and like metaphors related to space..."></textarea>
                 <div class="modal-btn-row">
                     <button class="action-btn" onclick="savePersonalization()">Save & Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createGemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Create Custom Gem</span>
+                <span class="close-modal" onclick="closeCreateGemModal()">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div class="gem-form-group">
+                    <label class="gem-form-label">Name</label>
+                    <input type="text" id="newGemName" class="gem-form-input" placeholder="e.g., Python Tutor">
+                </div>
+                
+                <div class="gem-form-group">
+                    <label class="gem-form-label">Description</label>
+                    <input type="text" id="newGemDesc" class="gem-form-input" placeholder="Short description for the library">
+                </div>
+
+                <div class="gem-form-group">
+                    <label class="gem-form-label">System Prompt (The Personality)</label>
+                    <textarea id="newGemPrompt" class="gem-form-textarea" placeholder="You are a... (Define how the AI should behave)"></textarea>
+                </div>
+
+                <div class="gem-form-group">
+                    <label class="gem-form-label">Welcome Message</label>
+                    <input type="text" id="newGemWelcome" class="gem-form-input" placeholder="First message the bot sends">
+                </div>
+
+                <div class="gem-form-group">
+                    <label class="gem-form-label">Icon Class (RemixIcon)</label>
+                    <input type="text" id="newGemIcon" class="gem-form-input" value="ri-robot-line" placeholder="e.g., ri-fire-line">
+                    <div style="font-size:0.75rem; color:var(--text-dim); margin-top:5px;">
+                        <a href="https://remixicon.com/" target="_blank" style="color:var(--accent)">Browse Icons</a>
+                    </div>
+                </div>
+
+                <div class="modal-btn-row">
+                    <button class="action-btn" onclick="saveNewGem()">Create Gem</button>
                 </div>
             </div>
         </div>
@@ -1509,7 +1586,7 @@
 
 
         // --- GEM CONFIGURATION ---
-        const GEMS = {
+        const SYSTEM_GEMS = {
             'default': { 
                 id: 'default',
                 name: 'RiBot', 
@@ -1560,6 +1637,14 @@
             }
         };
 
+        // Initialize Active Gems
+        let userGems = {}; 
+        let GEMS = { ...SYSTEM_GEMS }; 
+
+        function refreshGemList() {
+            GEMS = { ...SYSTEM_GEMS, ...userGems };
+        }
+
         // DOM Elements
         const chatArea = document.getElementById('chatArea');
         const historyList = document.getElementById('historyList');
@@ -1578,48 +1663,35 @@
 
         // --- Initialization ---
         window.onload = () => {
-            // 1. CHECK IF USER IS SIGNING IN VIA EMAIL LINK (NEW)
+            // Check for magic link sign-in
             if (auth.isSignInWithEmailLink(window.location.href)) {
                 let email = window.localStorage.getItem('emailForSignIn');
-                
-                // If email is not saved locally (e.g. user opened link on different device)
-                if (!email) {
-                    email = window.prompt('Please provide your email for confirmation');
-                }
-
+                if (!email) email = window.prompt('Please provide your email for confirmation');
                 if (email) {
                     auth.signInWithEmailLink(email, window.location.href)
                         .then((result) => {
-                            // Clear email from storage
                             window.localStorage.removeItem('emailForSignIn');
-                            
-                            // Remove the ugly query parameters from the URL bar
                             window.history.replaceState({}, document.title, window.location.pathname);
-                            
-                            // Auth listener below will handle the rest
                         })
-                        .catch((error) => {
-                            console.error(error);
-                            alert("Error signing in: " + error.message);
-                        });
+                        .catch((error) => { console.error(error); alert("Error signing in: " + error.message); });
                 }
             }
 
-            // 2. EXISTING AUTH LISTENER
+            // Auth Listener
             auth.onAuthStateChanged((user) => {
                 if (user) {
-                    // Logged In
                     currentUser = user;
                     document.getElementById('authContainer').style.display = 'none';
                     userProfileDisplay.innerText = user.email;
                     loadDataFromCloud();
                 } else {
-                    // Logged Out
                     currentUser = null;
                     document.getElementById('authContainer').style.display = 'flex';
                     chats = [];
                     gemUsage = {};
                     userPersonalization = "";
+                    userGems = {};
+                    refreshGemList();
                     openDashboard();
                 }
             });
@@ -1640,13 +1712,13 @@
                 title.innerText = "Create Account";
                 sub.innerText = "Sign up to start saving your chats.";
                 btn.innerText = "Sign Up";
-                magicLinkBtn.style.display = 'none'; // Hide magic link on sign up mode
+                magicLinkBtn.style.display = 'none'; 
                 switchBtn.innerText = "Already have an account? Sign In";
             } else {
                 title.innerText = "Welcome Back";
                 sub.innerText = "Sign in to sync your chats across devices.";
                 btn.innerText = "Sign In";
-                magicLinkBtn.style.display = 'block'; // Show magic link on sign in mode
+                magicLinkBtn.style.display = 'block'; 
                 switchBtn.innerText = "Don't have an account? Create one";
             }
         }
@@ -1686,7 +1758,6 @@
             }
         }
         
-        // --- NEW MAGIC LINK FUNCTION ---
         function sendMagicLink() {
             const email = document.getElementById('emailInput').value;
             const errorEl = document.getElementById('authError');
@@ -1699,7 +1770,7 @@
             }
 
             const actionCodeSettings = {
-                url: window.location.href, // Redirects back to this page
+                url: window.location.href, 
                 handleCodeInApp: true
             };
 
@@ -1734,11 +1805,11 @@
             try {
                 // Remove temporary chats before saving
                 const chatsToSave = chats.filter(c => !c.isTemp);
-                // Firestore limit check: Large images in chat might fail if doc > 1MB.
                 await db.collection('users').doc(currentUser.uid).set({
                     chats: chatsToSave,
                     gemUsage: gemUsage,
-                    personalization: userPersonalization, // Save personalization info
+                    personalization: userPersonalization, 
+                    userGems: userGems, 
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
                 storageWarn.style.display = 'none';
@@ -1757,9 +1828,10 @@
                     const data = doc.data();
                     chats = data.chats || [];
                     gemUsage = data.gemUsage || {};
-                    userPersonalization = data.personalization || ""; // Load personalization
+                    userPersonalization = data.personalization || ""; 
+                    userGems = data.userGems || {};
+                    refreshGemList();
                 }
-                // Refresh UI
                 renderHistory();
                 renderRecentGems();
                 renderMyStuffPreviews();
@@ -1776,6 +1848,8 @@
                          chats = [];
                          gemUsage = {};
                          userPersonalization = "";
+                         userGems = {};
+                         refreshGemList();
                          openDashboard();
                          renderHistory();
                          closeSettings();
@@ -1811,7 +1885,7 @@
 
         // --- Gems Logic ---
         function updateGemUsage(gemId) {
-            if(gemId === 'default') return; // Don't track default
+            if(gemId === 'default') return; 
             gemUsage[gemId] = Date.now();
             saveDataToCloud();
             renderRecentGems();
@@ -1821,19 +1895,25 @@
         function renderRecentGems() {
             gemsListContainer.innerHTML = '';
             
+            // Filter out keys that might exist in usage history but were deleted from GEMS
+            let validKeys = Object.keys(gemUsage).filter(k => GEMS[k]);
+
             let sortedGems = Object.keys(GEMS)
                 .filter(k => k !== 'default') 
                 .sort((a, b) => (gemUsage[b] || 0) - (gemUsage[a] || 0));
 
-            if (Object.keys(gemUsage).length === 0) {
-                 const defaults = ['coder', 'chess', 'logic'];
-                 sortedGems = [...defaults, ...sortedGems.filter(g => !defaults.includes(g))];
+            if (validKeys.length === 0) {
+                    const defaults = ['coder', 'chess', 'logic'];
+                    const availableDefaults = defaults.filter(d => GEMS[d]);
+                    sortedGems = [...availableDefaults, ...sortedGems.filter(g => !availableDefaults.includes(g))];
             }
 
             const gemsToShow = sortedGems.slice(0, 3);
 
             gemsToShow.forEach(key => {
                 const gem = GEMS[key];
+                if(!gem) return;
+
                 const div = document.createElement('div');
                 div.className = 'gem-item';
                 div.onclick = () => startNewChat(key);
@@ -1861,17 +1941,33 @@
             
             const header = document.createElement('div');
             header.style.padding = '20px 20px 0 20px';
-            header.innerHTML = '<h2 style="margin:0">Gem Library</h2><p style="color:var(--text-dim); margin-top:5px; font-size:0.9rem;">Choose a specialized AI personality.</p>';
+            header.innerHTML = '<h2 style="margin:0">Gem Library</h2><p style="color:var(--text-dim); margin-top:5px; font-size:0.9rem;">Choose a specialized AI personality or create your own.</p>';
             chatArea.appendChild(header);
 
             const grid = document.createElement('div');
             grid.className = 'gem-grid';
             
+            // 1. Add "Create New" Card First
+            const createCard = document.createElement('div');
+            createCard.className = 'gem-card create-gem-card';
+            createCard.onclick = openCreateGemModal;
+            createCard.innerHTML = `
+                <div class="gem-card-icon" style="background:rgba(128,128,128,0.1); color:var(--text-dim)"><i class="ri-add-line"></i></div>
+                <div class="gem-card-title">Create Custom Gem</div>
+                <div class="gem-card-desc">Design your own AI personality.</div>
+            `;
+            grid.appendChild(createCard);
+
+            // 2. Loop through all GEMS
             Object.keys(GEMS).forEach(key => {
                 const gem = GEMS[key];
+                const isCustom = userGems.hasOwnProperty(key); 
+
                 const card = document.createElement('div');
                 card.className = 'gem-card';
-                card.onclick = () => startNewChat(key);
+                card.onclick = (e) => {
+                    if(!e.target.closest('.delete-gem-btn')) startNewChat(key);
+                };
                 
                 let iconHtml = '';
                 if(gem.icon.includes('http') || gem.icon.includes('data:')) {
@@ -1880,7 +1976,13 @@
                     iconHtml = `<i class="${gem.icon}"></i>`;
                 }
 
+                let deleteBtn = '';
+                if(isCustom) {
+                    deleteBtn = `<button class="delete-gem-btn" onclick="deleteUserGem('${key}')"><i class="ri-delete-bin-line"></i></button>`;
+                }
+
                 card.innerHTML = `
+                    ${deleteBtn}
                     <div class="gem-card-icon">${iconHtml}</div>
                     <div class="gem-card-title">${gem.name}</div>
                     <div class="gem-card-desc">${gem.description || ''}</div>
@@ -1949,7 +2051,6 @@
 
         // --- Core Logic ---
 
-        // NEW: Open Smart Welcome Screen
         function openDashboard() {
             activeChatId = null;
             renderHistory(); 
@@ -2065,8 +2166,6 @@
             const chat = chats.find(c => c.id === id);
             if (chat && chat.gemType === 'chess' && typeof Chess !== 'undefined') {
                 chessGame = new Chess();
-                // Replay moves to sync board state if needed, simplified here to reset
-                // For a real app, we'd store FEN string in chat object
             }
 
             renderHistory();
@@ -2175,15 +2274,13 @@
 
             if ((!text && !hasFiles)) return;
 
-            // SPECIAL VIEWS: Reset if sending from special views
             if (activeChatId === 'gallery' || activeChatId === 'gems-library') {
                  activeChatId = startNewChat(); 
             }
             
-            // SMART WELCOME: If no active chat, create one now
             if (!activeChatId) {
                 activeChatId = startNewChat();
-                await new Promise(r => setTimeout(r, 10)); // Tiny delay for DOM
+                await new Promise(r => setTimeout(r, 10)); 
             }
 
             const currentChat = chats.find(c => c.id === activeChatId);
@@ -2265,14 +2362,12 @@
         }
 
         // --- Text Chat API ---
-async function handleTextChat(chatId, loadingId, filesContext) {
+        async function handleTextChat(chatId, loadingId, filesContext) {
             const chat = chats.find(c => c.id === chatId);
             
-            // 1. Prepare System Prompt & History
             let sysPrompt = chat.systemPrompt || GEMS['default'].prompt;
             sysPrompt += " Use Markdown for formatting. Use ```language for code blocks.";
             
-            // --- PERSONALIZATION INJECTION ---
             if (userPersonalization && userPersonalization.trim() !== "") {
                 sysPrompt += `\n\n[USER CONTEXT: The user has provided the following details about themselves. Adapt your responses accordingly: "${userPersonalization}"]`;
             }
@@ -2281,7 +2376,6 @@ async function handleTextChat(chatId, loadingId, filesContext) {
                 { role: "system", content: sysPrompt }
             ];
             
-            // Add File Context
             if (filesContext && filesContext.length > 0) {
                 filesContext.forEach(file => {
                     conversationHistory.push({
@@ -2291,19 +2385,15 @@ async function handleTextChat(chatId, loadingId, filesContext) {
                 });
             }
             
-            // Add Chat History
             chat.messages.forEach(m => {
                 if(m.type === 'text') {
                     const role = m.role === 'bot' ? 'assistant' : 'user';
-                    // Clean up internal tags before sending
                     let cleanContent = m.content.replace(/\n\[Uploaded.*\]/, '');
                     conversationHistory.push({ role: role, content: cleanContent });
                 }
             });
 
-            // 2. Attempt Connection
             try {
-                // PRIMARY METHOD: POST Request (Corrected URL)
                 const response = await fetch('[https://text.pollinations.ai/](https://text.pollinations.ai/)', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2323,9 +2413,7 @@ async function handleTextChat(chatId, loadingId, filesContext) {
             } catch (error) {
                 console.warn("Primary connection failed, trying fallback...", error);
                 
-                // FALLBACK METHOD: GET Request
                 try {
-                    // Safe access to last message without crashing
                     const userMsgs = conversationHistory.filter(m => m.role === 'user');
                     const lastUserMsg = userMsgs.length > 0 ? userMsgs[userMsgs.length - 1].content : "Hello";
                     
@@ -2342,18 +2430,14 @@ async function handleTextChat(chatId, loadingId, filesContext) {
                 } catch (finalError) {
                     console.error("All connection attempts failed:", finalError);
                     removeMessage(loadingId);
-                    // More descriptive error for debugging
-                    addMessage(chatId, 'bot', `Connection Error: ${finalError.message}. \n\nIf you are on a restricted network (like a school or office), they might be blocking the AI provider (Pollinations.ai).`, 'text');
+                    addMessage(chatId, 'bot', `Connection Error: ${finalError.message}.`, 'text');
                     if(isVoiceActive) speak("I am having trouble connecting.", true);
                 }
             }
         }
 
-        // Helper to process the response text
         function processBotResponse(rawData, chatId, loadingId, chat) {
             let botReply = rawData;
-            
-            // Attempt to parse if it came back as JSON
             try {
                 const json = JSON.parse(rawData);
                 if(json.choices && json.choices[0].message) {
@@ -2361,22 +2445,18 @@ async function handleTextChat(chatId, loadingId, filesContext) {
                 }
             } catch(e) {}
 
-            // Cleanup extra signatures sometimes added by the API
             botReply = botReply.replace(/(\n\n)?---[\s\S]*?Pollinations\.AI[\s\S]*$/, '');
 
             removeMessage(loadingId);
 
-            // --- CHESS LOGIC (If active) ---
             if (chat.gemType === 'chess' && chessGame) {
                 let aiMovePlayed = null;
-                // Look for [Move] bracket notation
                 const bracketMatch = botReply.match(/\[([a-zA-Z0-9#+]+)\]/);
                 if (bracketMatch) {
                     const move = chessGame.move(bracketMatch[1]);
                     if(move) aiMovePlayed = move;
                 } 
                 
-                // Fallback: Look for move in first few words
                 if (!aiMovePlayed) {
                     const words = botReply.split(/[\s,.]+/);
                     for (let i = 0; i < Math.min(words.length, 5); i++) {
@@ -2452,30 +2532,21 @@ async function handleTextChat(chatId, loadingId, filesContext) {
 
         // --- Helpers ---
 
-        // --- NEW DOWNLOAD HELPER FUNCTION ---
         async function forceDownload(url, filename) {
             try {
-                // 1. Fetch the image as a "Blob" (binary data)
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const blob = await response.blob();
-                
-                // 2. Create a temporary local URL for that data
                 const blobUrl = window.URL.createObjectURL(blob);
-                
-                // 3. Create a hidden link and click it programmatically
                 const link = document.createElement('a');
                 link.href = blobUrl;
                 link.download = filename;
                 document.body.appendChild(link);
                 link.click();
-                
-                // 4. Cleanup
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(blobUrl);
             } catch (error) {
                 console.error('Download failed:', error);
-                // Fallback: If it fails, open in new tab so user isn't stuck
                 window.open(url, '_blank');
             }
         }
@@ -2494,7 +2565,7 @@ async function handleTextChat(chatId, loadingId, filesContext) {
             
             chat.messages.push(msg);
             if (activeChatId === chatId) appendMessageToDOM(msg);
-            saveDataToCloud(); // Save triggers here
+            saveDataToCloud(); 
         }
 
         function formatResponse(text) {
@@ -2734,9 +2805,8 @@ async function handleTextChat(chatId, loadingId, filesContext) {
             document.getElementById('settingsModal').style.display = 'none';
         }
 
-        // --- PERSONALIZATION LOGIC (NEW) ---
         function openPersonalization() {
-            closeSettings(); // Close main settings
+            closeSettings(); 
             document.getElementById('personalizationModal').style.display = 'flex';
             document.getElementById('personalizationInput').value = userPersonalization;
         }
@@ -2747,14 +2817,12 @@ async function handleTextChat(chatId, loadingId, filesContext) {
         
         function savePersonalization() {
             userPersonalization = document.getElementById('personalizationInput').value.trim();
-            saveDataToCloud(); // Save to Firestore
+            saveDataToCloud();
             closePersonalization();
         }
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
-            // We can also save theme to cloud in a real app, 
-            // but keeping it local for speed or adding to cloud update
             const isLight = document.body.classList.contains('light-mode');
             localStorage.setItem('ribot_theme', isLight ? 'light' : 'dark');
             closeSettings();
@@ -2798,13 +2866,69 @@ async function handleTextChat(chatId, loadingId, filesContext) {
             reader.readAsText(file);
         }
 
+        // --- CUSTOM GEM LOGIC ---
+        function openCreateGemModal() {
+            document.getElementById('createGemModal').style.display = 'flex';
+            // Reset fields
+            document.getElementById('newGemName').value = '';
+            document.getElementById('newGemDesc').value = '';
+            document.getElementById('newGemPrompt').value = '';
+            document.getElementById('newGemWelcome').value = '';
+            document.getElementById('newGemIcon').value = 'ri-robot-line';
+        }
+
+        function closeCreateGemModal() {
+            document.getElementById('createGemModal').style.display = 'none';
+        }
+
+        function saveNewGem() {
+            const name = document.getElementById('newGemName').value.trim();
+            const desc = document.getElementById('newGemDesc').value.trim();
+            const prompt = document.getElementById('newGemPrompt').value.trim();
+            const welcome = document.getElementById('newGemWelcome').value.trim();
+            const icon = document.getElementById('newGemIcon').value.trim() || 'ri-robot-line';
+
+            if(!name || !prompt) {
+                alert("Please provide at least a Name and a System Prompt.");
+                return;
+            }
+
+            const id = 'custom_' + Date.now();
+            
+            // Create Gem Object
+            const newGem = {
+                id: id,
+                name: name,
+                description: desc,
+                prompt: prompt,
+                welcome: welcome || `Hello! I am ${name}.`,
+                icon: icon,
+                isCustom: true
+            };
+
+            // Update Data
+            userGems[id] = newGem;
+            refreshGemList(); 
+            saveDataToCloud(); 
+            
+            closeCreateGemModal();
+            openGemsLibrary(); 
+        }
+
+        function deleteUserGem(id) {
+            if(confirm("Are you sure you want to delete this custom Gem?")) {
+                delete userGems[id];
+                refreshGemList();
+                saveDataToCloud();
+                openGemsLibrary();
+            }
+        }
+
         window.onclick = function(event) {
-            if (event.target == document.getElementById('settingsModal')) {
-                closeSettings();
-            }
-            if (event.target == document.getElementById('personalizationModal')) {
-                closePersonalization();
-            }
+            const createModal = document.getElementById('createGemModal');
+            if (event.target == createModal) closeCreateGemModal();
+            if (event.target == document.getElementById('settingsModal')) closeSettings();
+            if (event.target == document.getElementById('personalizationModal')) closePersonalization();
         }
 
         chatInput.addEventListener('keypress', (e) => {
