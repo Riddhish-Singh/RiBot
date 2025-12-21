@@ -1239,6 +1239,30 @@
         }
         .action-btn:hover { background: var(--accent-hover); }
 
+        /* --- CODE PREVIEW MODAL STYLES --- */
+        #codePreviewModal .modal-content {
+            width: 90%;
+            max-width: 1000px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #codePreviewModal .modal-body {
+            flex: 1;
+            padding: 0;
+            overflow: hidden;
+            background: #ffffff; /* Always white for web previews */
+            position: relative;
+        }
+
+        #previewFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
         @keyframes pulse-listen {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
             70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
@@ -1513,6 +1537,18 @@
         </div>
     </div>
 
+    <div id="codePreviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Code Preview</span>
+                <span class="close-modal" onclick="closeCodePreview()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="importInput" style="display:none" accept=".json" onchange="handleImportFile(event)">
 
     <script>
@@ -1557,14 +1593,23 @@
         const renderer = new marked.Renderer();
         
         renderer.code = function(code, language) {
-            const validLang = language || 'text';
+            const validLang = (language || 'text').toLowerCase();
             const escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             
+            // Check if the language is previewable (HTML or SVG)
+            let previewBtn = '';
+            if (validLang === 'html' || validLang === 'svg' || validLang === 'xml') {
+                previewBtn = `<button class="code-btn" onclick="previewCode(this)">
+                                <i class="ri-play-circle-line"></i> Preview
+                              </button>`;
+            }
+
             return `
               <div class="code-block">
                 <div class="code-header">
                   <span>${validLang}</span>
                   <div class="code-actions">
+                    ${previewBtn}
                     <button class="code-btn" onclick="copyCode(this)">Copy</button>
                     <button class="code-btn" onclick="downloadCode(this, '${validLang}')">Download</button>
                   </div>
@@ -2623,6 +2668,48 @@
             URL.revokeObjectURL(url);
         }
 
+        // --- CODE PREVIEW FUNCTIONS ---
+
+        function previewCode(btn) {
+            const rawEl = btn.closest(".code-block").querySelector(".raw-code-storage");
+            let code = decodeURIComponent(rawEl.innerText);
+
+            // If there is no specific HTML structure, wrap it slightly for better viewing
+            if (!code.toLowerCase().includes('<!doctype html>') && !code.toLowerCase().includes('<html')) {
+                // If it's just an SVG, it renders fine. If it's a div soup, we might want basic styles.
+                code = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <style>body { font-family: sans-serif; padding: 20px; }</style>
+                    </head>
+                    <body>
+                        ${code}
+                    </body>
+                    </html>
+                `;
+            }
+
+            const modal = document.getElementById('codePreviewModal');
+            const iframe = document.getElementById('previewFrame');
+            
+            // Open Modal
+            modal.style.display = 'flex';
+            
+            // Inject content into iframe
+            iframe.srcdoc = code;
+        }
+
+        function closeCodePreview() {
+            const modal = document.getElementById('codePreviewModal');
+            const iframe = document.getElementById('previewFrame');
+            
+            modal.style.display = 'none';
+            iframe.srcdoc = ''; // Clear content to stop scripts from running in background
+        }
+
         function appendMessageToDOM(msg) {
             const row = document.createElement('div');
             row.className = `message-row ${msg.role}-row`;
@@ -2925,10 +3012,10 @@
         }
 
         window.onclick = function(event) {
-            const createModal = document.getElementById('createGemModal');
-            if (event.target == createModal) closeCreateGemModal();
+            if (event.target == document.getElementById('createGemModal')) closeCreateGemModal();
             if (event.target == document.getElementById('settingsModal')) closeSettings();
             if (event.target == document.getElementById('personalizationModal')) closePersonalization();
+            if (event.target == document.getElementById('codePreviewModal')) closeCodePreview();
         }
 
         chatInput.addEventListener('keypress', (e) => {
