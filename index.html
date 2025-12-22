@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RiBot Studio</title>
+    <title>RiBot Studio + Agent</title>
     <link rel="icon" type="image/png" href="https://riddhish-singh.github.io/RiSync.ai/assets/logo-bot.png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -15,11 +15,143 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <style>
+	/* --- LAB / BUILDER MODE STYLES --- */
+.lab-container {
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.lab-header {
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 15px;
+}
+
+.lab-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    height: calc(100vh - 200px);
+}
+
+.lab-controls {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+}
+
+.lab-output-area {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    height: 100%;
+}
+
+.lab-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lab-textarea {
+    width: 100%;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px;
+    font-family: "Fira Code", monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+    outline: none;
+}
+.lab-textarea:focus { border-color: var(--accent); }
+
+.lab-range-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.lab-range-val {
+    font-family: monospace;
+    color: var(--accent);
+    width: 30px;
+}
+
+.lab-btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.lab-btn-primary:hover { background: var(--accent-hover); }
+
+.compare-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    flex: 1;
+    min-height: 0;
+}
+
+.compare-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.compare-header {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+}
+
+.lab-response-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+    .lab-grid { grid-template-columns: 1fr; height: auto; }
+    .compare-container { grid-template-columns: 1fr; height: auto; }
+    .lab-textarea { min-height: 100px; }
+    .compare-box { min-height: 300px; }
+}
         /* --- CSS STYLES --- */
         :root {
             /* RiBot Theme Colors (Default Dark) */
             --accent: #007AFF; 
             --accent-hover: #0062cc;
+            --agent-color: #AF52DE; /* Purple for Agent Mode */
             
             --bg-sidebar: #131314; 
             --bg-main: #1e1e1f;
@@ -459,6 +591,12 @@
         }
         .menu-toggle-btn:hover { background: rgba(128, 128, 128, 0.2); }
 
+        .controls-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
         .voice-control {
             display: flex;
             align-items: center;
@@ -490,6 +628,10 @@
         }
         input[type="checkbox"]:checked + .toggle-switch { background: var(--accent); }
         input[type="checkbox"]:checked + .toggle-switch::after { transform: translateX(16px); }
+
+        /* Agent Toggle Color Override */
+        input[type="checkbox"].agent-check:checked + .toggle-switch { background: var(--agent-color); }
+
 
         .chat-area {
             flex: 1;
@@ -1207,21 +1349,6 @@
         .setting-danger { color: #ff453a; }
         .setting-danger .setting-icon { color: #ff453a; }
         
-        .personalization-input {
-            width: 90%;
-            margin: 0 auto;
-            display: block;
-            height: 150px;
-            background: rgba(128,128,128,0.1);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 10px;
-            border-radius: 8px;
-            resize: none;
-            font-family: inherit;
-        }
-        .personalization-input:focus { outline: none; border-color: var(--accent); }
-        
         .modal-btn-row {
             display: flex;
             justify-content: flex-end;
@@ -1238,6 +1365,151 @@
             font-size: 0.9rem;
         }
         .action-btn:hover { background: var(--accent-hover); }
+
+        /* --- STRUCTURED MEMORY MODAL --- */
+        #memoryModal .modal-content {
+            max-width: 600px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #memoryModal .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .memory-add-form {
+            background: rgba(128,128,128,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        .mem-input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .mem-select {
+            padding: 8px;
+            border-radius: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            outline: none;
+        }
+        .mem-list { display: flex; flex-direction: column; gap: 8px; }
+        .mem-item {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .mem-item-content { flex: 1; margin-right: 10px; }
+        .mem-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            background: rgba(0, 122, 255, 0.2);
+            color: #58a6ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            display: inline-block;
+        }
+        .mem-text { font-size: 0.9rem; color: var(--text); line-height: 1.4; }
+        .mem-delete { color: #ff453a; cursor: pointer; opacity: 0.6; }
+        .mem-delete:hover { opacity: 1; }
+
+        /* --- AGENT MODE STYLES --- */
+        #agentDashboard {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            width: 280px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            max-height: calc(100vh - 200px);
+        }
+        #agentDashboard.active { display: flex; animation: slideDown 0.3s ease; }
+        
+        .agent-header {
+            background: linear-gradient(90deg, #8E2DE2, #4A00E0);
+            padding: 12px 15px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .agent-content {
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .agent-goal {
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-bottom: 15px;
+            font-style: italic;
+            border-left: 2px solid var(--agent-color);
+            padding-left: 10px;
+        }
+        
+        .agent-task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .agent-task-item {
+            font-size: 0.85rem;
+            padding: 8px 10px;
+            background: rgba(128,128,128,0.1);
+            border-radius: 6px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        
+        .agent-task-item.pending { border-left: 3px solid #666; }
+        .agent-task-item.active { 
+            background: rgba(175, 82, 222, 0.15); 
+            color: var(--text);
+            border-left: 3px solid var(--agent-color);
+            font-weight: 500;
+        }
+        .agent-task-item.done {
+            opacity: 0.6;
+            text-decoration: line-through;
+            border-left: 3px solid #34c759;
+        }
+
+        .task-spinner {
+            width: 12px; height: 12px;
+            border: 2px solid var(--agent-color);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .agent-task-item.active .task-spinner { display: block; }
+        
+        .task-icon {
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
 
         /* --- CODE PREVIEW MODAL STYLES --- */
         #codePreviewModal .modal-content {
@@ -1296,6 +1568,10 @@
             .sidebar-close-btn { display: block; }
             .bot-msg { min-width: auto; }
             .input-wrapper { border-radius: 0; border: none; border-top: 1px solid #333; }
+            
+            #agentDashboard {
+                top: auto; bottom: 80px; right: 10px; left: 10px; width: auto;
+            }
         }
 
     </style>
@@ -1392,15 +1668,36 @@
                 <span style="font-weight:600">RiBot</span>
             </div>
             
-            <label class="voice-control">
-                <i class="ri-volume-up-line"></i>
-                <span style="margin-right:8px; font-size:0.8rem">Read Aloud</span>
-                <input type="checkbox" id="voiceToggle" style="display:none">
-                <div class="toggle-switch"></div>
-            </label>
+            <div class="controls-group">
+                <label class="voice-control" title="Enable Autonomous Agent Mode">
+                    <i class="ri-robot-2-line" style="color:var(--agent-color)"></i>
+                    <span style="margin-right:8px; font-size:0.8rem; color:var(--text)">Agent Mode</span>
+                    <input type="checkbox" id="agentToggle" class="agent-check" style="display:none" onchange="toggleAgentModeUI()">
+                    <div class="toggle-switch"></div>
+                </label>
+
+                <label class="voice-control">
+                    <i class="ri-volume-up-line"></i>
+                    <span style="margin-right:8px; font-size:0.8rem">Read Aloud</span>
+                    <input type="checkbox" id="voiceToggle" style="display:none">
+                    <div class="toggle-switch"></div>
+                </label>
+            </div>
         </div>
 
         <div class="chat-area" id="chatArea"></div>
+
+        <div id="agentDashboard">
+            <div class="agent-header">
+                <span><i class="ri-robot-2-fill"></i> Agent Progress</span>
+                <i class="ri-close-line" style="cursor:pointer" onclick="closeAgentDashboard()"></i>
+            </div>
+            <div class="agent-content">
+                <div class="agent-goal" id="agentGoalDisplay">Goal: Not set</div>
+                <div class="agent-task-list" id="agentTaskList">
+                    </div>
+            </div>
+        </div>
 
         <div class="input-container">
             <div class="typing-indicator" id="typingIndicator">RiBot is thinking...</div>
@@ -1419,6 +1716,10 @@
                     
                     <button class="icon-btn" onclick="toggleVoiceMode()" title="Voice Conversation">
                         <i class="ri-headphone-line"></i>
+                    </button>
+
+                    <button class="icon-btn" onclick="triggerMemoryExtraction()" title="Remember important facts from this chat">
+                        <i class="ri-brain-line"></i>
                     </button>
 
                     <input 
@@ -1454,8 +1755,8 @@
                     <span class="setting-label"><i class="ri-contrast-line setting-icon"></i> Switch Theme</span>
                     <i class="ri-arrow-right-s-line" style="color:var(--text-dim)"></i>
                 </div>
-                <div class="setting-item" onclick="openPersonalization()">
-                    <span class="setting-label"><i class="ri-user-settings-line setting-icon"></i> Personalization</span>
+                <div class="setting-item" onclick="openMemoryModal()">
+                    <span class="setting-label"><i class="ri-brain-line setting-icon"></i> Memory & Personalization</span>
                     <i class="ri-arrow-right-s-line" style="color:var(--text-dim)"></i>
                 </div>
                 <div class="setting-item" onclick="exportData()">
@@ -1468,7 +1769,7 @@
                 </div>
                  <div class="setting-item" style="cursor:default">
                     <span class="setting-label" style="font-size:0.85rem; color:var(--text-dim)"><i class="ri-information-line setting-icon"></i> Version</span>
-                    <span style="font-size:0.85rem; color:var(--text-dim)">3.2.0 </span>
+                    <span style="font-size:0.85rem; color:var(--text-dim)">3.4.0 (Agent Mode)</span>
                 </div>
                 <div class="setting-item setting-danger" onclick="clearAllStorage()">
                     <span class="setting-label"><i class="ri-delete-bin-line setting-icon"></i> Clear Account Data</span>
@@ -1477,20 +1778,30 @@
         </div>
     </div>
 
-    <div id="personalizationModal" class="modal">
+    <div id="memoryModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span>Personalize Your AI</span>
-                <span class="close-modal" onclick="closePersonalization()">&times;</span>
+                <span>Long-Term Memory</span>
+                <span class="close-modal" onclick="closeMemoryModal()">&times;</span>
             </div>
             <div class="modal-body">
-                <div style="padding: 0 20px 10px 20px; font-size: 0.9rem; color: var(--text-dim);">
-                    Tell RiBot about yourself. This information will be used to customize responses across all chats.
+                <div class="memory-add-form">
+                    <div style="font-size:0.85rem; color:var(--text-dim); margin-bottom:10px;">Add a new fact, rule, or preference RiBot should always remember.</div>
+                    <div class="mem-input-row">
+                        <select id="memCategory" class="mem-select">
+                            <option value="User Info">User Info</option>
+                            <option value="Preference">Preference</option>
+                            <option value="Project">Project</option>
+                            <option value="Fact">Fact</option>
+                        </select>
+                        <input type="text" id="memInput" class="gem-form-input" style="margin:0" placeholder="E.g., I prefer Python over Java">
+                    </div>
+                    <button class="action-btn" style="width:100%" onclick="addMemoryManual()">Add to Memory</button>
                 </div>
-                <textarea id="personalizationInput" class="personalization-input" placeholder="E.g., My name is Alex. I am a software engineer learning Python. I prefer concise answers and like metaphors related to space..."></textarea>
-                <div class="modal-btn-row">
-                    <button class="action-btn" onclick="savePersonalization()">Save & Close</button>
-                </div>
+                
+                <div style="padding-bottom:10px; font-weight:600; color:var(--text-dim)">Stored Memories</div>
+                <div id="memoryList" class="mem-list">
+                    </div>
             </div>
         </div>
     </div>
@@ -1544,7 +1855,7 @@
                 <span class="close-modal" onclick="closeCodePreview()">&times;</span>
             </div>
             <div class="modal-body">
-                <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+                <iframe id="previewFrame" sandbox="allow-scripts"></iframe>
             </div>
         </div>
     </div>
@@ -1575,11 +1886,20 @@
         // --- State Management ---
         let chats = []; 
         let gemUsage = {}; 
-        let userPersonalization = ""; 
+        let userGems = {}; 
         let activeChatId = null;
         let currentImageFile = null; 
         let uploadedFilesContext = []; 
         
+        // --- MEMORY STATE ---
+        let memoryStore = []; 
+
+        // --- AGENT MODE STATE ---
+        let isAgentMode = false;
+        let agentPlan = []; // Array of tasks { name, status: 'pending'|'active'|'done' }
+        let currentAgentStepIndex = 0;
+        let agentGoal = "";
+
         // Voice State
         let isVoiceActive = false;
         let isAiSpeaking = false; 
@@ -1596,7 +1916,6 @@
             const validLang = (language || 'text').toLowerCase();
             const escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             
-            // Check if the language is previewable (HTML or SVG)
             let previewBtn = '';
             if (validLang === 'html' || validLang === 'svg' || validLang === 'xml') {
                 previewBtn = `<button class="code-btn" onclick="previewCode(this)">
@@ -1683,7 +2002,6 @@
         };
 
         // Initialize Active Gems
-        let userGems = {}; 
         let GEMS = { ...SYSTEM_GEMS }; 
 
         function refreshGemList() {
@@ -1705,6 +2023,8 @@
         const voiceToggle = document.getElementById('voiceToggle');
         const chatFilesList = document.getElementById('chatFilesList');
         const userProfileDisplay = document.getElementById('userProfileDisplay');
+        const agentToggle = document.getElementById('agentToggle');
+        const agentDashboard = document.getElementById('agentDashboard');
 
         // --- Initialization ---
         window.onload = () => {
@@ -1734,7 +2054,7 @@
                     document.getElementById('authContainer').style.display = 'flex';
                     chats = [];
                     gemUsage = {};
-                    userPersonalization = "";
+                    memoryStore = [];
                     userGems = {};
                     refreshGemList();
                     openDashboard();
@@ -1853,7 +2173,7 @@
                 await db.collection('users').doc(currentUser.uid).set({
                     chats: chatsToSave,
                     gemUsage: gemUsage,
-                    personalization: userPersonalization, 
+                    memoryStore: memoryStore, 
                     userGems: userGems, 
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
@@ -1873,8 +2193,16 @@
                     const data = doc.data();
                     chats = data.chats || [];
                     gemUsage = data.gemUsage || {};
-                    userPersonalization = data.personalization || ""; 
                     userGems = data.userGems || {};
+                    
+                    if(data.memoryStore) {
+                        memoryStore = data.memoryStore;
+                    } else if(data.personalization && typeof data.personalization === 'string') {
+                        memoryStore = [{ id: Date.now(), category: 'User Info', content: data.personalization }];
+                    } else {
+                        memoryStore = [];
+                    }
+
                     refreshGemList();
                 }
                 renderHistory();
@@ -1892,7 +2220,7 @@
                      db.collection('users').doc(currentUser.uid).delete().then(() => {
                          chats = [];
                          gemUsage = {};
-                         userPersonalization = "";
+                         memoryStore = [];
                          userGems = {};
                          refreshGemList();
                          openDashboard();
@@ -2146,11 +2474,11 @@
                             <div class="feature-desc">Challenge a grandmaster engine.</div>
                         </div>
                     </div>
-                    <div class="feature-card" onclick="startNewChat('writer')">
-                        <div class="feature-icon-box"><i class="ri-quill-pen-line"></i></div>
+                    <div class="feature-card" onclick="toggleAgentModeUI(true); setQuickInput('Create a simple landing page')">
+                        <div class="feature-icon-box" style="color:var(--agent-color); background: rgba(175, 82, 222, 0.1);"><i class="ri-robot-2-fill"></i></div>
                         <div>
-                            <div class="feature-title">Write a Story</div>
-                            <div class="feature-desc">Creative writing and scripts.</div>
+                            <div class="feature-title">Auto-Agent</div>
+                            <div class="feature-desc">Give me a goal, I'll execute the steps.</div>
                         </div>
                     </div>
                 </div>
@@ -2313,6 +2641,172 @@
             });
         }
 
+        // --- AGENT MODE LOGIC ---
+
+        function toggleAgentModeUI(forceOn = false) {
+            if(forceOn) {
+                agentToggle.checked = true;
+                isAgentMode = true;
+            } else {
+                isAgentMode = agentToggle.checked;
+            }
+            
+            if(!isAgentMode) {
+                closeAgentDashboard();
+            }
+        }
+
+        function closeAgentDashboard() {
+            agentDashboard.classList.remove('active');
+            agentPlan = [];
+            currentAgentStepIndex = 0;
+            agentGoal = "";
+        }
+
+        async function initAgentFlow(goal) {
+            if (!activeChatId) activeChatId = startNewChat();
+            
+            agentGoal = goal;
+            agentDashboard.classList.add('active');
+            document.getElementById('agentGoalDisplay').innerText = `Goal: ${goal}`;
+            document.getElementById('agentTaskList').innerHTML = `<div style="padding:10px; color:var(--text-dim)">Planning...</div>`;
+
+            addMessage(activeChatId, 'user', `[Agent Goal] ${goal}`, 'text');
+            const loadingId = addLoadingBubble("Creating Agent Plan...");
+
+            const prompt = `
+                You are an Autonomous Agent Planner.
+                The user's goal is: "${goal}".
+                
+                Break this goal into 3 to 6 distinct, executable steps.
+                Format the response strictly as a JSON array of strings. 
+                Do not include markdown blocks like \`\`\`json. Just the raw JSON array.
+                Example: ["Write HTML structure", "Add CSS styling", "Write JS logic"]
+            `;
+
+            try {
+                // FIXED URL (Removed brackets)
+                const response = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [{ role: 'system', content: 'You are a JSON planner.' }, { role: 'user', content: prompt }],
+                        model: 'openai',
+                        
+                    })
+                });
+                
+                let text = await response.text();
+                text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                const steps = JSON.parse(text);
+                
+                if(Array.isArray(steps)) {
+                    agentPlan = steps.map(s => ({ name: s, status: 'pending' }));
+                    removeMessage(loadingId);
+                    renderAgentDashboard();
+                    executeAgentStep(); // Start execution
+                } else {
+                    throw new Error("Invalid plan format");
+                }
+            } catch(e) {
+                console.error(e);
+                removeMessage(loadingId);
+                addMessage(activeChatId, 'bot', "I couldn't create a plan. Switching back to normal chat.", 'text');
+                closeAgentDashboard();
+            }
+        }
+
+        function renderAgentDashboard() {
+            const list = document.getElementById('agentTaskList');
+            list.innerHTML = '';
+            
+            agentPlan.forEach((task, index) => {
+                let icon = '<i class="ri-circle-line task-icon"></i>';
+                let cls = 'pending';
+                
+                if(task.status === 'active') {
+                    icon = '<div class="task-spinner"></div>';
+                    cls = 'active';
+                } else if(task.status === 'done') {
+                    icon = '<i class="ri-checkbox-circle-fill task-icon" style="color:#34c759"></i>';
+                    cls = 'done';
+                }
+                
+                const div = document.createElement('div');
+                div.className = `agent-task-item ${cls}`;
+                div.innerHTML = `${icon} <span>${task.name}</span>`;
+                list.appendChild(div);
+            });
+        }
+
+        async function executeAgentStep() {
+            if(currentAgentStepIndex >= agentPlan.length) {
+                // Done
+                addMessage(activeChatId, 'bot', "All tasks completed! Agent Mode finished.", 'text');
+                return;
+            }
+            
+            // Set current task to active
+            agentPlan[currentAgentStepIndex].status = 'active';
+            renderAgentDashboard();
+            
+            const taskName = agentPlan[currentAgentStepIndex].name;
+            const loadingId = addLoadingBubble(`Agent: Executing "${taskName}"...`);
+            
+            // Build Context for execution
+            const chat = chats.find(c => c.id === activeChatId);
+            const contextMsg = {
+                role: 'system',
+                content: `
+                    You are an Autonomous Agent Executor.
+                    GOAL: ${agentGoal}
+                    CURRENT TASK: ${taskName}
+                    
+                    Execute this task. If it involves code, write the full code. If it involves explanation, be concise.
+                    Do not ask "what to do next", just do it.
+                `
+            };
+            
+            try {
+                // We use the existing chat history so the agent knows what it did previously
+                const msgs = chat.messages.map(m => ({
+                    role: m.role === 'bot' ? 'assistant' : 'user',
+                    content: m.content
+                }));
+                msgs.push(contextMsg);
+
+                // FIXED URL (Removed brackets)
+                const response = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: msgs,
+                        model: 'openai',
+                        
+                    })
+                });
+
+                const data = await response.text();
+                processBotResponse(data, activeChatId, loadingId, chat); // Use existing processor
+                
+                // Mark done
+                agentPlan[currentAgentStepIndex].status = 'done';
+                currentAgentStepIndex++;
+                renderAgentDashboard();
+                
+                // Trigger next step automatically after small delay
+                setTimeout(executeAgentStep, 1500);
+                
+            } catch(e) {
+                removeMessage(loadingId);
+                addMessage(activeChatId, 'bot', `Agent stuck at: ${taskName}. Stopping execution.`, 'text');
+                agentPlan[currentAgentStepIndex].status = 'pending'; // Revert
+                renderAgentDashboard();
+            }
+        }
+
+
         async function handleSend(isVoiceSource = false) {
             const text = chatInput.value.trim();
             const hasFiles = uploadedFilesContext.length > 0 || !!currentImageFile;
@@ -2326,6 +2820,16 @@
             if (!activeChatId) {
                 activeChatId = startNewChat();
                 await new Promise(r => setTimeout(r, 10)); 
+            }
+            
+            // --- AGENT MODE INTERCEPTION ---
+            if(isAgentMode && !currentImageFile && uploadedFilesContext.length === 0) {
+                // If dashboard is closed or plan is done, treat this as a NEW goal
+                if(!agentDashboard.classList.contains('active') || currentAgentStepIndex >= agentPlan.length) {
+                    chatInput.value = '';
+                    initAgentFlow(text);
+                    return; 
+                }
             }
 
             const currentChat = chats.find(c => c.id === activeChatId);
@@ -2413,8 +2917,10 @@
             let sysPrompt = chat.systemPrompt || GEMS['default'].prompt;
             sysPrompt += " Use Markdown for formatting. Use ```language for code blocks.";
             
-            if (userPersonalization && userPersonalization.trim() !== "") {
-                sysPrompt += `\n\n[USER CONTEXT: The user has provided the following details about themselves. Adapt your responses accordingly: "${userPersonalization}"]`;
+            // --- INJECT LONG TERM MEMORY ---
+            if(memoryStore && memoryStore.length > 0) {
+                const categorizedMemory = memoryStore.map(m => `- [${m.category}] ${m.content}`).join('\n');
+                sysPrompt += `\n\n[USER LONG-TERM MEMORY]\nThe following are confirmed facts about the user. Adapt your responses to align with this context:\n${categorizedMemory}`;
             }
 
             const conversationHistory = [
@@ -2439,7 +2945,8 @@
             });
 
             try {
-                const response = await fetch('[https://text.pollinations.ai/](https://text.pollinations.ai/)', {
+                // FIXED: REMOVED BRACKETS []
+                const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     mode: 'cors',
@@ -2456,28 +2963,11 @@
                 processBotResponse(data, chatId, loadingId, chat);
 
             } catch (error) {
-                console.warn("Primary connection failed, trying fallback...", error);
+                console.warn("Connection failed", error);
                 
-                try {
-                    const userMsgs = conversationHistory.filter(m => m.role === 'user');
-                    const lastUserMsg = userMsgs.length > 0 ? userMsgs[userMsgs.length - 1].content : "Hello";
-                    
-                    const encodedPrompt = encodeURIComponent(`${sysPrompt}\n\nUser: ${lastUserMsg}\n\nAssistant:`);
-                    const cacheBuster = Math.floor(Math.random() * 10000);
-                    
-                    const fallbackResponse = await fetch(`https://text.pollinations.ai/${encodedPrompt}?model=openai&seed=${cacheBuster}`);
-                    
-                    if (!fallbackResponse.ok) throw new Error('Fallback request failed');
-                    
-                    const fallbackData = await fallbackResponse.text();
-                    processBotResponse(fallbackData, chatId, loadingId, chat);
-
-                } catch (finalError) {
-                    console.error("All connection attempts failed:", finalError);
-                    removeMessage(loadingId);
-                    addMessage(chatId, 'bot', `Connection Error: ${finalError.message}.`, 'text');
-                    if(isVoiceActive) speak("I am having trouble connecting.", true);
-                }
+                // FIXED: REMOVED FALLBACK LOOP TO PREVENT SPAM
+                removeMessage(loadingId);
+                addMessage(chatId, 'bot', `Connection Error (${error.message}). Please wait a moment and try again.`, 'text');
             }
         }
 
@@ -2892,21 +3382,130 @@
             document.getElementById('settingsModal').style.display = 'none';
         }
 
-        function openPersonalization() {
-            closeSettings(); 
-            document.getElementById('personalizationModal').style.display = 'flex';
-            document.getElementById('personalizationInput').value = userPersonalization;
+        // --- NEW MEMORY MODAL LOGIC ---
+        function openMemoryModal() {
+            closeSettings();
+            document.getElementById('memoryModal').style.display = 'flex';
+            renderMemoryList();
         }
-        
-        function closePersonalization() {
-            document.getElementById('personalizationModal').style.display = 'none';
+
+        function closeMemoryModal() {
+            document.getElementById('memoryModal').style.display = 'none';
         }
-        
-        function savePersonalization() {
-            userPersonalization = document.getElementById('personalizationInput').value.trim();
+
+        function renderMemoryList() {
+            const list = document.getElementById('memoryList');
+            list.innerHTML = '';
+            
+            if(!memoryStore || memoryStore.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-dim)">No long-term memories stored yet.</div>';
+                return;
+            }
+
+            memoryStore.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'mem-item';
+                div.innerHTML = `
+                    <div class="mem-item-content">
+                        <div class="mem-tag">${item.category}</div>
+                        <div class="mem-text">${item.content}</div>
+                    </div>
+                    <i class="ri-delete-bin-line mem-delete" onclick="deleteMemoryItem(${index})"></i>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function addMemoryManual() {
+            const cat = document.getElementById('memCategory').value;
+            const val = document.getElementById('memInput').value.trim();
+            if(!val) return;
+            
+            memoryStore.push({
+                id: Date.now(),
+                category: cat,
+                content: val
+            });
+            
+            document.getElementById('memInput').value = '';
             saveDataToCloud();
-            closePersonalization();
+            renderMemoryList();
         }
+
+        function deleteMemoryItem(index) {
+            if(confirm("Forget this memory?")) {
+                memoryStore.splice(index, 1);
+                saveDataToCloud();
+                renderMemoryList();
+            }
+        }
+
+        // --- TRIGGER MEMORY EXTRACTION ---
+        // This simulates "Structured Memory Extraction" by asking the LLM to summarize facts
+        async function triggerMemoryExtraction() {
+            if(!activeChatId) { alert("Open a chat first."); return; }
+            
+            // Get recent messages
+            const chat = chats.find(c => c.id === activeChatId);
+            const recentMsgs = chat.messages.slice(-6).map(m => `${m.role}: ${m.content}`).join('\n');
+            
+            if(recentMsgs.length < 20) { alert("Chat is too short to extract memory."); return; }
+
+            const loadingId = addLoadingBubble("Analyzing chat for long-term memory...");
+
+            const prompt = `
+                Analyze the following conversation conversation and extract specific, permanent facts about the user (e.g., name, job, specific preferences, project details).
+                Ignore casual conversation.
+                
+                Format the output strictly as a JSON array of objects with 'category' (one of: 'User Info', 'Preference', 'Project', 'Fact') and 'content'.
+                Example: [{"category": "User Info", "content": "Name is Alex"}, {"category": "Preference", "content": "Likes Python"}]
+                
+                Conversation:
+                ${recentMsgs}
+            `;
+
+            try {
+                // FIXED: REMOVED BRACKETS []
+                const response = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [{ role: 'system', content: 'You are a JSON generator.' }, { role: 'user', content: prompt }],
+                        model: 'openai',
+                        
+                    })
+                });
+                
+                let text = await response.text();
+                // Clean markdown code blocks if present
+                text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                const newMemories = JSON.parse(text);
+                if(Array.isArray(newMemories)) {
+                    let addedCount = 0;
+                    newMemories.forEach(m => {
+                        if(m.category && m.content) {
+                            memoryStore.push({ id: Date.now() + Math.random(), category: m.category, content: m.content });
+                            addedCount++;
+                        }
+                    });
+                    
+                    if(addedCount > 0) {
+                        saveDataToCloud();
+                        removeMessage(loadingId);
+                        addMessage(activeChatId, 'bot', `I have added ${addedCount} new items to my long-term memory. You can view them in Settings.`, 'text');
+                    } else {
+                        removeMessage(loadingId);
+                        addMessage(activeChatId, 'bot', "I didn't find any new specific facts to remember.", 'text');
+                    }
+                }
+            } catch(e) {
+                console.error(e);
+                removeMessage(loadingId);
+                addMessage(activeChatId, 'bot', "Failed to extract memory automatically. Try adding it manually in Settings.", 'text');
+            }
+        }
+
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
@@ -2916,7 +3515,7 @@
         }
 
         function exportData() {
-            const dataStr = JSON.stringify({ chats, gemUsage });
+            const dataStr = JSON.stringify({ chats, gemUsage, memoryStore });
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             const exportFileDefaultName = 'ribot_data_backup.json';
             const linkElement = document.createElement('a');
@@ -2940,6 +3539,7 @@
                     const json = JSON.parse(e.target.result);
                     if (json.chats) chats = json.chats;
                     if (json.gemUsage) gemUsage = json.gemUsage;
+                    if (json.memoryStore) memoryStore = json.memoryStore; // Import Memory
                     saveDataToCloud();
                     renderHistory();
                     renderMyStuffPreviews();
@@ -3014,7 +3614,7 @@
         window.onclick = function(event) {
             if (event.target == document.getElementById('createGemModal')) closeCreateGemModal();
             if (event.target == document.getElementById('settingsModal')) closeSettings();
-            if (event.target == document.getElementById('personalizationModal')) closePersonalization();
+            if (event.target == document.getElementById('memoryModal')) closeMemoryModal();
             if (event.target == document.getElementById('codePreviewModal')) closeCodePreview();
         }
 
