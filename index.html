@@ -15,6 +15,91 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <style>
+	/* --- NEW MESSAGE ACTION BAR STYLES --- */
+.msg-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.msg-actions-row:hover {
+    opacity: 1;
+}
+
+.action-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    position: relative; /* For dropdown positioning */
+}
+
+.action-icon-btn:hover {
+    background: rgba(128, 128, 128, 0.15);
+    color: var(--text);
+}
+
+.action-icon-btn.active {
+    color: var(--accent); /* Highlights thumbs up/down if clicked */
+}
+
+/* --- DROPDOWN MENU STYLES --- */
+.action-menu-dropdown {
+    position: absolute;
+    bottom: 110%; /* Shows above the button */
+    left: 0;
+    width: 200px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    z-index: 100;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    padding: 5px;
+    animation: fadeIn 0.2s ease;
+}
+
+.action-menu-dropdown.show {
+    display: flex;
+}
+
+.menu-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s;
+    text-align: left;
+    background: none;
+    border: none;
+    width: 100%;
+}
+
+.menu-option:hover {
+    background: rgba(128, 128, 128, 0.1);
+}
+
+.menu-option i {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+}
 	/* --- LAB / BUILDER MODE STYLES --- */
 .lab-container {
     padding: 20px;
@@ -3200,42 +3285,86 @@
             iframe.srcdoc = ''; // Clear content to stop scripts from running in background
         }
 
-        function appendMessageToDOM(msg) {
-            const row = document.createElement('div');
-            row.className = `message-row ${msg.role}-row`;
-            row.id = `msg-${msg.id}`;
+function appendMessageToDOM(msg) {
+    const row = document.createElement('div');
+    row.className = `message-row ${msg.role}-row`;
+    row.id = `msg-row-${msg.id}`; // Added ID to row for reference
 
-            const bubble = document.createElement('div');
-            bubble.className = `msg-bubble ${msg.role}-msg`;
+    const bubble = document.createElement('div');
+    bubble.className = `msg-bubble ${msg.role}-msg`;
 
-            if (msg.attachment) {
-                 bubble.innerHTML += `<img src="${msg.attachment}" class="user-attachment">`;
-            }
+    // 1. Handle Attachments
+    if (msg.attachment) {
+            bubble.innerHTML += `<img src="${msg.attachment}" class="user-attachment">`;
+    }
 
-            if (msg.type === 'text') {
-                const textSpan = document.createElement('div');
-                textSpan.className = 'markdown-body';
-                textSpan.innerHTML = formatResponse(msg.content);
-                bubble.appendChild(textSpan);
-            } 
-            else if (msg.type === 'image') {
-                bubble.innerHTML = `
-                    <div>Here is your result:</div>
-                    <img src="${msg.content}" class="generated-img" onclick="window.open('${msg.content}', '_blank')">
-                    <button onclick="forceDownload('${msg.content}', 'RiBot-Art.jpg')" style="background:transparent; border:none; color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none; cursor:pointer;">⬇ Download Image</button>
-                `;
-            }
-            else if (msg.type === 'chess-image') {
-                bubble.innerHTML = `
-                    <div>Current Board:</div>
-                    <img src="${msg.content}" class="chess-board-img">
-                `;
-            }
+    // 2. Handle Text/Markdown
+    if (msg.type === 'text') {
+        const textSpan = document.createElement('div');
+        textSpan.className = 'markdown-body';
+        textSpan.innerHTML = formatResponse(msg.content);
+        bubble.appendChild(textSpan);
+    } 
+    else if (msg.type === 'image') {
+        bubble.innerHTML = `
+            <div>Here is your result:</div>
+            <img src="${msg.content}" class="generated-img" onclick="window.open('${msg.content}', '_blank')">
+            <button onclick="forceDownload('${msg.content}', 'RiBot-Art.jpg')" style="background:transparent; border:none; color:white; font-size:0.8rem; display:block; margin-top:5px; text-decoration:none; cursor:pointer;">⬇ Download Image</button>
+        `;
+    }
+    else if (msg.type === 'chess-image') {
+        bubble.innerHTML = `
+            <div>Current Board:</div>
+            <img src="${msg.content}" class="chess-board-img">
+        `;
+    }
 
-            row.appendChild(bubble);
-            chatArea.appendChild(row);
-            scrollToBottom();
-        }
+    // --- NEW: INJECT ACTION BAR FOR BOT ONLY ---
+    if (msg.role === 'bot') {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'msg-actions-row';
+        
+        // Note: Using RemixIcons (ri-) to match your existing setup
+        actionsDiv.innerHTML = `
+            <button class="action-icon-btn" title="Copy" onclick="copyMsgText(this)">
+                <i class="ri-file-copy-line"></i>
+            </button>
+            <button class="action-icon-btn" title="Good Response" onclick="rateMsg(this, 'up')">
+                <i class="ri-thumb-up-line"></i>
+            </button>
+            <button class="action-icon-btn" title="Bad Response" onclick="rateMsg(this, 'down')">
+                <i class="ri-thumb-down-line"></i>
+            </button>
+            <button class="action-icon-btn" title="Share/Upload" onclick="shareMsg('${msg.id}')">
+                <i class="ri-share-forward-line"></i>
+            </button>
+            <button class="action-icon-btn" title="Regenerate" onclick="regenerateMsg('${msg.id}')">
+                <i class="ri-refresh-line"></i>
+            </button>
+            
+            <div style="position:relative">
+                <button class="action-icon-btn" title="More" onclick="toggleMsgMenu(event, '${msg.id}')">
+                    <i class="ri-more-2-fill"></i>
+                </button>
+                
+                <div id="menu-${msg.id}" class="action-menu-dropdown">
+                    <button class="menu-option" onclick="branchChat('${msg.id}')">
+                        <i class="ri-git-branch-line"></i> Branch in new chat
+                    </button>
+                    <button class="menu-option" onclick="readAloudMsg(this)">
+                        <i class="ri-volume-up-line"></i> Read aloud
+                    </button>
+                </div>
+            </div>
+        `;
+        bubble.appendChild(actionsDiv);
+    }
+    // -------------------------------------------
+
+    row.appendChild(bubble);
+    chatArea.appendChild(row);
+    scrollToBottom();
+}
 
         function addLoadingBubble(text) {
             const id = 'loading-' + Date.now();
@@ -3621,7 +3750,96 @@
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleSend();
         });
+/* --- NEW ACTION BAR LOGIC --- */
 
+// 1. Toggle the dropdown menu
+function toggleMsgMenu(event, msgId) {
+    event.stopPropagation(); // Prevent closing immediately
+    
+    // Close all other open menus first
+    document.querySelectorAll('.action-menu-dropdown').forEach(el => {
+        if(el.id !== `menu-${msgId}`) el.classList.remove('show');
+    });
+
+    const menu = document.getElementById(`menu-${msgId}`);
+    menu.classList.toggle('show');
+}
+
+// 2. Close menus when clicking anywhere else on page
+document.addEventListener('click', function() {
+    document.querySelectorAll('.action-menu-dropdown').forEach(el => {
+        el.classList.remove('show');
+    });
+});
+
+// 3. Copy Text
+function copyMsgText(btn) {
+    // Navigate up to the markdown body to get text
+    const bubble = btn.closest('.msg-bubble');
+    const textDiv = bubble.querySelector('.markdown-body');
+    
+    if(textDiv) {
+        navigator.clipboard.writeText(textDiv.innerText).then(() => {
+            const icon = btn.querySelector('i');
+            icon.className = 'ri-check-line'; // Feedback checkmark
+            setTimeout(() => icon.className = 'ri-file-copy-line', 1500);
+        });
+    }
+}
+
+// 4. Rate Message (Visual only for now)
+function rateMsg(btn, type) {
+    // Reset siblings
+    const parent = btn.parentElement;
+    const thumbs = parent.querySelectorAll('.ri-thumb-up-line, .ri-thumb-down-line, .ri-thumb-up-fill, .ri-thumb-down-fill');
+    
+    // Reset icons to outlines
+    thumbs.forEach(i => {
+        if(i.classList.contains('ri-thumb-up-fill')) i.classList.replace('ri-thumb-up-fill', 'ri-thumb-up-line');
+        if(i.classList.contains('ri-thumb-down-fill')) i.classList.replace('ri-thumb-down-fill', 'ri-thumb-down-line');
+        i.parentElement.classList.remove('active');
+    });
+
+    // Toggle clicked one
+    const icon = btn.querySelector('i');
+    if(type === 'up') {
+        icon.classList.replace('ri-thumb-up-line', 'ri-thumb-up-fill');
+        btn.classList.add('active');
+    } else {
+        icon.classList.replace('ri-thumb-down-line', 'ri-thumb-down-fill');
+        btn.classList.add('active');
+    }
+}
+
+// 5. Read Aloud (Uses your existing speak function)
+function readAloudMsg(btn) {
+    const bubble = btn.closest('.msg-bubble');
+    const textDiv = bubble.querySelector('.markdown-body');
+    if(textDiv && typeof speak === 'function') {
+        speak(textDiv.innerText, false);
+    }
+}
+
+// 6. Branch Chat (Placeholder Logic)
+function branchChat(msgId) {
+    // Logic: Identify message, create new chat, copy history up to this point
+    alert("This feature would create a new chat starting from this context.");
+    // Implementation: 
+    // 1. Find current chat in 'chats' array.
+    // 2. Slice messages array up to 'msgId'.
+    // 3. Create new chat object with sliced messages.
+    // 4. Push to chats, switchChat(newId).
+}
+
+// 7. Regenerate (Placeholder Logic)
+function regenerateMsg(msgId) {
+    alert("Regenerating last response...");
+    // Logic: Remove this bot message, trigger handleSend() with last user message.
+}
+
+function shareMsg(msgId) {
+    alert("Share functionality triggered.");
+}
     </script>
 </body>
 </html>
